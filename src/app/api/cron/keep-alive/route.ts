@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     
     // We also make a lightweight DB query. If the table doesn't exist, the request 
     // itself still counts as valid activity towards the inactivity timer.
-    await supabase.from('_dummy_ping_table').select('*').limit(1).catch(() => {});
+    await supabase.from('_dummy_ping_table').select('*').limit(1);
 
     return NextResponse.json({ 
       status: 'success', 
