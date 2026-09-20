@@ -500,18 +500,7 @@ export function Chat({
           </div>
         </div>
 
-        {/* Slide-over panels (Discover / Profile) */}
-        {currentView === 'discover' && (
-          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.25rem 1rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>New Chat</h2>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              <Discover currentUser={currentUser} onMessageUser={(u) => { setSelectedUser(u); setCurrentView?.('inbox'); setMobileShowChat(true); }} />
-            </div>
-          </div>
-        )}
+        {/* Slide-over panels (Profile) */}
 
         {currentView === 'profile' && (
           <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
@@ -571,7 +560,7 @@ export function Chat({
       </div>
 
       {/* =============== CHAT AREA =============== */}
-      <div className={isMobile && !mobileShowChat ? 'hide-on-mobile' : ''} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className={isMobile && !mobileShowChat ? 'hide-on-mobile' : ''} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}>
         
         {/* Image Crop Modal */}
         {imageSrc && (
@@ -614,6 +603,19 @@ export function Chat({
                   {uploading ? 'Sending...' : 'Send Image'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Discover Full View */}
+        {currentView === 'discover' && (
+          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.25rem 1.5rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Discover People</h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <Discover currentUser={currentUser} onMessageUser={(u) => { setSelectedUser(u); setCurrentView?.('inbox'); setMobileShowChat(true); }} />
             </div>
           </div>
         )}
