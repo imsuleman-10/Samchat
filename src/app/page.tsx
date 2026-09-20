@@ -121,7 +121,8 @@ export default function Home() {
   // --- Main Layout ---
   return (
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-      {/* 1. Main Navigation Sidebar — on mobile it is a fixed top bar */}
+      {/* 1. Main Navigation Sidebar — hidden when profile is open so profile gets full width */}
+      {currentView !== 'profile' && (
       <div
         className={(isMobile && !isChatActive) ? 'mobile-top-nav' : ''}
         style={isMobile ? { display: isChatActive ? 'none' : 'flex' } : {
@@ -143,6 +144,7 @@ export default function Home() {
           isMobile={isMobile}
         />
       </div>
+      )}
 
       {/* 2. Main Content Area — on mobile leaves room for the fixed top bar */}
       <div className={(isMobile && !isChatActive) ? "mobile-main-content" : ""} style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%' }}>
@@ -159,11 +161,25 @@ export default function Home() {
 
         {/* Profile View */}
         {currentView === 'profile' && (
-          <div className="animate-fade" style={{ width: '100%', height: '100%', display: 'flex' }}>
-            <MyProfile 
-              user={currentUser || session.user} 
-              onProfileUpdated={updated => setCurrentUser(updated)} 
-            />
+          <div className="animate-fade" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* Back header */}
+            <div style={{ padding: '1rem 1.5rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
+              <button
+                onClick={() => setCurrentView('inbox')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', borderRadius: '8px', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 500 }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}
+              >
+                ← Back
+              </button>
+              <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>My Profile</span>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <MyProfile 
+                user={currentUser || session.user} 
+                onProfileUpdated={updated => setCurrentUser(updated)} 
+              />
+            </div>
           </div>
         )}
 
