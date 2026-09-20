@@ -3,16 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  LogOut, Send, Paperclip, Mic, MicOff, Download, X, Search,
+  Send, Paperclip, Mic, MicOff, Download, X, Search,
   Check, CheckCheck, Reply, Trash2, Smile, Image as ImageIcon,
-  Music, MoreVertical, Phone, Video, Info, ChevronLeft,
-  MessageSquare, Users, Settings
+  Music, MoreVertical, Info, ChevronLeft,
+  Users
 } from "lucide-react";
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/cropImage';
 import { AudioPlayer } from './AudioPlayer';
-import { Discover } from './Discover';
-import { MyProfile } from './MyProfile';
+
 
 const ADMIN_EMAIL = 'samstacktechs@gmail.com';
 const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','😡','🎉','🔥','👏','🙏','😍','🤔','💪','✅'];
@@ -59,16 +58,10 @@ function formatLastSeen(ts: string) {
 
 export function Chat({ 
   session, 
-  onChatActiveChange, 
-  currentView = 'inbox', 
-  setCurrentView, 
-  currentUserProfile 
+  onChatActiveChange 
 }: { 
   session: any, 
-  onChatActiveChange?: (active: boolean) => void,
-  currentView?: string,
-  setCurrentView?: (view: any) => void,
-  currentUserProfile?: any
+  onChatActiveChange?: (active: boolean) => void 
 }) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
@@ -484,35 +477,13 @@ export function Chat({
       }}>
         {/* Sidebar Header */}
         <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', background: 'var(--bg-secondary)', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setCurrentView?.('profile')}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <Avatar user={myProfile} size="sm" />
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-icon btn-ghost" title="New Chat" onClick={() => setCurrentView?.('discover')}>
-              <MessageSquare size={20} />
-            </button>
-            <button className="btn btn-icon btn-ghost" title="Profile & Settings" onClick={() => setCurrentView?.('profile')}>
-              <Settings size={20} />
-            </button>
-            <button className="btn btn-icon btn-ghost" title="Log Out" onClick={async () => await supabase.auth.signOut()}>
-              <LogOut size={20} />
-            </button>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600 }}>Chats</h2>
           </div>
         </div>
 
         {/* Slide-over panels (Profile) */}
-
-        {currentView === 'profile' && (
-          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.25rem 1rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Profile</h2>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              <MyProfile user={myProfile || currentUser} onProfileUpdated={updated => setMyProfile(updated)} />
-            </div>
-          </div>
-        )}
 
         {/* Search */}
         <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-border)' }}>
