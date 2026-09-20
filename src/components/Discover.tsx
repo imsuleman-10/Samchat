@@ -73,11 +73,22 @@ export function Discover({ currentUser, onMessageUser }: { currentUser: any, onM
                   flexDirection: 'column', 
                   alignItems: 'center', 
                   cursor: 'pointer',
-                  transition: 'var(--transition)',
-                  textAlign: 'center'
+                  transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease',
+                  textAlign: 'center',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-lg)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)';
+                }}
+                onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.96)'; }}
+                onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px)'; }}
+                onTouchStart={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.96)'; }}
+                onTouchEnd={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
               >
                 <div style={{ position: 'relative', marginBottom: '1rem' }}>
                   {user.avatar_url ? (

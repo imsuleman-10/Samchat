@@ -273,9 +273,9 @@ export function MyProfile({ user, onProfileUpdated }: { user: any, onProfileUpda
         </div>
 
         {/* Danger Zone */}
-        <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--error)', borderRadius: 'var(--radius-xl)', background: 'var(--error-light)' }}>
+        <div className="danger-zone" style={{ marginTop: '2.5rem' }}>
           <h3 style={{ color: 'var(--error)', fontWeight: 700, marginBottom: '0.5rem' }}>Danger Zone</h3>
-          <p style={{ fontSize: '0.875rem', color: 'var(--error)', opacity: 0.8, marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--error)', opacity: 0.8, marginBottom: '1.25rem' }}>
             Once you delete your account, there is no going back. Please be certain.
           </p>
           <button 

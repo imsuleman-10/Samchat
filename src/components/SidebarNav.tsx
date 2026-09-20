@@ -23,23 +23,28 @@ export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0,
           alignItems: 'center',
           justifyContent: (isOpen && !isMobile) ? 'flex-start' : 'center',
           gap: (isOpen && !isMobile) ? '1rem' : '0.35rem',
-          padding: isMobile ? '0.5rem' : (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
-          width: isMobile ? 'auto' : '100%',
+          padding: isMobile ? '0.4rem 0' : (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
+          width: isMobile ? '100%' : '100%',
           flex: isMobile ? 1 : 'none',
-          border: `1px solid ${isActive ? 'rgba(91,142,240,0.2)' : 'transparent'}`,
-          borderRadius: '14px',
+          border: isMobile ? 'none' : `1px solid ${isActive ? 'rgba(91,142,240,0.2)' : 'transparent'}`,
+          borderRadius: isMobile ? '0' : '14px',
           color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-          background: isActive ? 'var(--primary-light)' : 'transparent',
+          background: isMobile ? 'transparent' : (isActive ? 'var(--primary-light)' : 'transparent'),
           position: 'relative',
-          transition: 'var(--transition)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
           cursor: 'pointer',
           fontFamily: 'inherit',
           overflow: 'hidden',
+          WebkitTapHighlightColor: 'transparent',
         }}
-        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        onMouseEnter={e => { if (!isActive && !isMobile) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+        onMouseLeave={e => { if (!isActive && !isMobile) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        onMouseDown={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)'; }}
+        onMouseUp={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+        onTouchStart={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)'; }}
+        onTouchEnd={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
       >
-        <div style={{ transition: 'transform 0.2s', flexShrink: 0, ...(isActive && { filter: 'drop-shadow(0 0 6px var(--primary))' }) }}>
+        <div style={{ transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', transform: (isActive && isMobile) ? 'translateY(-2px)' : 'none', flexShrink: 0, ...(isActive && { filter: 'drop-shadow(0 0 8px rgba(91,142,240,0.5))' }) }}>
           {icon}
         </div>
         {(!isMobile) && (
@@ -58,10 +63,10 @@ export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0,
         {badge > 0 && (
           <span className="badge" style={{
             position: 'absolute',
-            top: (isOpen && !isMobile) ? '50%' : '6px',
-            right: (isOpen && !isMobile) ? '1rem' : '6px',
-            transform: (isOpen && !isMobile) ? 'translateY(-50%)' : 'none',
-            border: '2px solid var(--bg-secondary)',
+            top: (isOpen && !isMobile) ? '50%' : '4px',
+            right: (isOpen && !isMobile) ? '1rem' : '50%',
+            transform: (isOpen && !isMobile) ? 'translateY(-50%)' : 'translateX(14px)',
+            border: isMobile ? 'none' : '2px solid var(--bg-secondary)',
             background: 'var(--error)',
             color: 'white',
             fontSize: '0.65rem',
@@ -82,7 +87,7 @@ export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0,
     <div style={{
       width: '100%',
       height: '100%',
-      background: 'var(--bg-secondary)',
+      background: isMobile ? 'transparent' : 'var(--bg-secondary)',
       borderRight: isMobile ? 'none' : '1px solid var(--surface-border)',
       display: 'flex',
       flexDirection: isMobile ? 'row' : 'column',
@@ -143,10 +148,10 @@ export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0,
       )}
 
       {/* Nav Items */}
-      <div style={{ flex: isMobile ? 'none' : 1, display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '0.3rem', width: isMobile ? 'auto' : '100%' }}>
-        <NavItem id="discover" icon={<Compass size={24} strokeWidth={2} />} label="Discover" />
-        <NavItem id="inbox"    icon={<MessageSquare size={24} strokeWidth={2} />} label="Inbox" badge={unreadTotal} />
-        <NavItem id="profile"  icon={<UserIcon size={24} strokeWidth={2} />} label="Profile" />
+      <div style={{ flex: isMobile ? 1 : 1, display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '0' : '0.3rem', width: '100%', justifyContent: isMobile ? 'space-around' : 'flex-start' }}>
+        <NavItem id="discover" icon={<Compass size={26} strokeWidth={currentView==='discover' ? 2.5 : 2} />} label="Discover" />
+        <NavItem id="inbox"    icon={<MessageSquare size={26} strokeWidth={currentView==='inbox' ? 2.5 : 2} />} label="Inbox" badge={unreadTotal} />
+        <NavItem id="profile"  icon={<UserIcon size={26} strokeWidth={currentView==='profile' ? 2.5 : 2} />} label="Profile" />
       </div>
 
       {/* Separator */}
@@ -162,21 +167,27 @@ export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0,
           alignItems: 'center',
           justifyContent: (isOpen && !isMobile) ? 'flex-start' : 'center',
           gap: (isOpen && !isMobile) ? '1rem' : '0.35rem',
-          padding: isMobile ? '0.5rem' : (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
-          width: isMobile ? 'auto' : '100%',
+          padding: isMobile ? '0.4rem 0' : (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
+          width: isMobile ? '100%' : '100%',
+          flex: isMobile ? 1 : 'none',
           border: '1px solid transparent',
-          borderRadius: '14px',
+          borderRadius: isMobile ? '0' : '14px',
           color: 'var(--text-muted)',
           background: 'transparent',
           cursor: 'pointer',
           fontFamily: 'inherit',
-          transition: 'var(--transition)',
+          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
           overflow: 'hidden',
+          WebkitTapHighlightColor: 'transparent',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--error)'; (e.currentTarget as HTMLElement).style.background = 'var(--error-light)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        onMouseEnter={e => { if (!isMobile) { (e.currentTarget as HTMLElement).style.color = 'var(--error)'; (e.currentTarget as HTMLElement).style.background = 'var(--error-light)'; } }}
+        onMouseLeave={e => { if (!isMobile) { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; } }}
+        onMouseDown={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)'; }}
+        onMouseUp={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+        onTouchStart={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.9)'; }}
+        onTouchEnd={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
       >
-        <LogOut size={22} strokeWidth={2} style={{ flexShrink: 0 }} />
+        <LogOut size={26} strokeWidth={2} style={{ flexShrink: 0 }} />
         {(!isMobile) && (
           <span style={{ 
             fontSize: isOpen ? '0.9rem' : '0.68rem', 

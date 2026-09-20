@@ -77,6 +77,12 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
+/* Hide scrollbars on mobile (touch devices) for native feel */
+@media (hover: none) and (pointer: coarse) {
+  ::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  * { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
 /* ======== Glass Card ======== */
 .glass {
   background: var(--surface);
@@ -118,7 +124,7 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(91,142,240,0.35);
 }
-.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-primary:active:not(:disabled) { transform: scale(0.96); box-shadow: 0 2px 8px rgba(91,142,240,0.3); }
 
 /* Ghost */
 .btn-ghost {
@@ -129,8 +135,8 @@ body {
 .btn-ghost:hover:not(:disabled) {
   background: var(--bg-hover);
   color: var(--text-primary);
-  border-color: var(--surface-border);
 }
+.btn-ghost:active:not(:disabled) { transform: scale(0.94); }
 
 /* Danger */
 .btn-danger {
@@ -149,8 +155,8 @@ body {
 .btn-icon {
   padding: 0.45rem;
   border-radius: var(--radius-full);
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   flex-shrink: 0;
 }
 
@@ -369,13 +375,15 @@ body {
 .msg-bubble-sent {
   background: linear-gradient(135deg, #3f6de0 0%, #5b4fcf 100%);
   color: #fff;
-  border-radius: 18px 18px 4px 18px;
+  border-radius: 20px 20px 4px 20px;
+  box-shadow: 0 4px 12px rgba(91, 142, 240, 0.15);
 }
 .msg-bubble-received {
   background: var(--bg-tertiary);
   border: 1px solid var(--surface-border-strong);
   color: var(--text-primary);
-  border-radius: 18px 18px 18px 4px;
+  border-radius: 20px 20px 20px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* ======== Sidebar nav item ======== */
@@ -420,7 +428,9 @@ body {
     width: 100% !important;
     height: 65px !important;
     z-index: 1000;
-    background: var(--bg-secondary) !important;
+    background: rgba(17, 24, 39, 0.85) !important;
+    backdrop-filter: blur(24px) saturate(1.8) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
     border-top: 1px solid var(--surface-border);
     border-right: none !important;
     display: flex !important;
@@ -431,6 +441,7 @@ body {
     gap: 0 !important;
     /* Support for phones with home indicator (safe area) */
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.2) !important;
   }
 
   /* The main wrapper becomes a simple column but the sidebar is fixed, so no need for row/col change */

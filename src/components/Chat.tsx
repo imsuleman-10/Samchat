@@ -545,7 +545,19 @@ export function Chat({ session }: { session: any }) {
         {selectedUser ? (
           <>
             {/* Chat Header */}
-            <div style={{ padding: '0.875rem 1.5rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-secondary)', flexShrink: 0 }}>
+            <div style={{
+              padding: '0.875rem 1.5rem',
+              borderBottom: '1px solid var(--surface-border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              background: isMobile ? 'rgba(17, 24, 39, 0.85)' : 'var(--bg-secondary)',
+              backdropFilter: isMobile ? 'blur(12px)' : 'none',
+              WebkitBackdropFilter: isMobile ? 'blur(12px)' : 'none',
+              flexShrink: 0,
+              zIndex: 10,
+              position: 'relative'
+            }}>
               <button onClick={() => { setMobileShowChat(false); setSelectedUser(null); }} className="btn btn-icon btn-ghost" style={{ display: isMobile ? 'flex' : 'none' }}><ChevronLeft size={20} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flex: 1, cursor: 'pointer' }} onClick={() => setShowProfile(v => !v)}>
                 <Avatar user={selectedUser} size="md" showOnline />
@@ -588,17 +600,17 @@ export function Chat({ session }: { session: any }) {
                           )}
                           <div
                             onContextMenu={e => !isDeleted && handleRightClick(e, msg)}
+                            className={isMine ? 'msg-bubble-sent' : 'msg-bubble-received'}
                             style={{
                               padding: '0.6rem 0.875rem',
-                              borderRadius: '14px',
-                              background: isMine ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'var(--bg-secondary)',
-                              border: isMine ? 'none' : '1px solid var(--surface-border)',
-                              borderBottomRightRadius: isMine ? '4px' : '14px',
-                              borderBottomLeftRadius: !isMine ? '4px' : '14px',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                               cursor: 'context-menu',
                               position: 'relative',
                               maxWidth: '100%',
+                              color: isDeleted ? (isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)') : (isMine ? '#fff' : 'var(--text-primary)'),
+                              fontStyle: isDeleted ? 'italic' : 'normal',
+                              wordBreak: 'break-word',
+                              borderBottomRightRadius: isMine ? '4px' : '20px',
+                              borderBottomLeftRadius: !isMine ? '4px' : '20px',
                             }}
                           >
                             {/* Reply quote */}
