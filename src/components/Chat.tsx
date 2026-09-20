@@ -11,6 +11,8 @@ import {
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/cropImage';
 import { AudioPlayer } from './AudioPlayer';
+import { Discover } from './Discover';
+import { MyProfile } from './MyProfile';
 
 const ADMIN_EMAIL = 'samstacktechs@gmail.com';
 const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','😡','🎉','🔥','👏','🙏','😍','🤔','💪','✅'];
@@ -55,7 +57,19 @@ function formatLastSeen(ts: string) {
   return d.toLocaleDateString();
 }
 
-export function Chat({ session, onChatActiveChange }: { session: any, onChatActiveChange?: (active: boolean) => void }) {
+export function Chat({ 
+  session, 
+  onChatActiveChange, 
+  currentView = 'inbox', 
+  setCurrentView, 
+  currentUserProfile 
+}: { 
+  session: any, 
+  onChatActiveChange?: (active: boolean) => void,
+  currentView?: string,
+  setCurrentView?: (view: any) => void,
+  currentUserProfile?: any
+}) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
 
@@ -78,6 +92,7 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
 
   // UI state
   const [replyTo, setReplyTo] = useState<any>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; msg: any } | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
@@ -275,17 +290,26 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
     setShowEmojiPicker(false);
     scrollToBottom();
 
-    await supabase.from('messages').insert({
-      sender_id: currentUser.id,
-      receiver_id: selectedUser.id,
-      content: content.trim(),
-      type,
-      file_url: fileUrl || null,
-      reply_to: replyTo?.id || null,
-      is_read: false,
-      deleted_for_everyone: false,
-      reactions: {},
-    });
+    if (editingMessageId) {
+      await supabase.from('messages').update({
+        content: content.trim(),
+        is_edited: true,
+      }).eq('id', editingMessageId);
+      setEditingMessageId(null);
+    } else {
+      await supabase.from('messages').insert({
+        sender_id: currentUser.id,
+        receiver_id: selectedUser.id,
+        content: content.trim(),
+        type,
+        file_url: fileUrl || null,
+        reply_to: replyTo?.id || null,
+        is_read: false,
+        deleted_for_everyone: false,
+        is_edited: false,
+        reactions: {},
+      });
+    }
 
     // Broadcast stop typing
     typingChannel.current?.send({ type: 'broadcast', event: 'typing', payload: { userId: currentUser.id, isTyping: false } });
@@ -403,7 +427,13 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
 
   // ---- Message actions ----
   const deleteForEveryone = async (msgId: string) => {
-    await supabase.from('messages').update({ deleted_for_everyone: true, content: 'This message was deleted.' }).eq('id', msgId);
+    await supabase.from('messages').update({ deleted_for_everyone: true, content: '🚫 This message was deleted', file_url: null }).eq('id', msgId);
+    setContextMenu(null);
+  };
+
+  const editMessage = (msgId: string, content: string) => {
+    setEditingMessageId(msgId);
+    setNewMessage(content);
     setContextMenu(null);
   };
 
@@ -453,15 +483,47 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
         overflow: 'hidden',
       }}>
         {/* Sidebar Header */}
-        <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', background: 'var(--bg-secondary)', zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => setCurrentView?.('profile')}>
             <Avatar user={myProfile} size="sm" />
-            <div>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', lineHeight: 1.2 }}>{myProfile?.name || 'You'}</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--success)' }}>● Online</p>
-            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-icon btn-ghost" title="New Chat" onClick={() => setCurrentView?.('discover')}>
+              <MessageSquare size={20} />
+            </button>
+            <button className="btn btn-icon btn-ghost" title="Profile & Settings" onClick={() => setCurrentView?.('profile')}>
+              <Settings size={20} />
+            </button>
+            <button className="btn btn-icon btn-ghost" title="Log Out" onClick={async () => await supabase.auth.signOut()}>
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
+
+        {/* Slide-over panels (Discover / Profile) */}
+        {currentView === 'discover' && (
+          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.25rem 1rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>New Chat</h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <Discover currentUser={currentUser} onMessageUser={(u) => { setSelectedUser(u); setCurrentView?.('inbox'); setMobileShowChat(true); }} />
+            </div>
+          </div>
+        )}
+
+        {currentView === 'profile' && (
+          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 20, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '1.25rem 1rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Profile</h2>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <MyProfile user={myProfile || currentUser} onProfileUpdated={updated => setMyProfile(updated)} />
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-border)' }}>
@@ -487,7 +549,7 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
               </p>
               {filteredUsers.map(user => (
                 <div key={user.id} onClick={() => { setSelectedUser(user); setMobileShowChat(true); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderRadius: '12px', cursor: 'pointer', transition: 'var(--transition-fast)', background: selectedUser?.id === user.id ? 'var(--primary-light)' : 'transparent', marginBottom: '2px' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', cursor: 'pointer', transition: 'var(--transition-fast)', background: selectedUser?.id === user.id ? 'var(--bg-active)' : 'transparent', borderBottom: '1px solid var(--surface-border)' }}
                   onMouseEnter={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
                   onMouseLeave={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                 >
@@ -623,8 +685,6 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
                               color: isDeleted ? (isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)') : (isMine ? '#fff' : 'var(--text-primary)'),
                               fontStyle: isDeleted ? 'italic' : 'normal',
                               wordBreak: 'break-word',
-                              borderBottomRightRadius: isMine ? '4px' : '20px',
-                              borderBottomLeftRadius: !isMine ? '4px' : '20px',
                             }}
                           >
                             {/* Reply quote */}
@@ -639,7 +699,10 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
                             {isDeleted ? (
                               <p style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', fontSize: '0.875rem' }}>🚫 This message was deleted</p>
                             ) : msg.type === 'text' ? (
-                              <p style={{ wordBreak: 'break-word', lineHeight: 1.55, fontSize: '0.9rem' }}>{msg.content}</p>
+                              <p style={{ wordBreak: 'break-word', lineHeight: 1.55, fontSize: '0.9rem' }}>
+                                {msg.content}
+                                {msg.is_edited && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px', fontStyle: 'italic' }}>(edited)</span>}
+                              </p>
                             ) : msg.type === 'image' && msg.file_url ? (
                               <div>
                                 <img src={msg.file_url} alt="Image" onClick={() => setLightboxImage(msg.file_url)} style={{ maxWidth: '260px', maxHeight: '220px', borderRadius: '8px', cursor: 'zoom-in', display: 'block' }} />
@@ -709,6 +772,19 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>{replyTo.content}</p>
                 </div>
                 <button onClick={() => setReplyTo(null)} className="btn btn-icon btn-ghost"><X size={16} /></button>
+              </div>
+            )}
+
+            {/* Edit preview */}
+            {editingMessageId && (
+              <div style={{ padding: '0.65rem 1.5rem', background: 'var(--bg-secondary)', borderTop: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ borderLeft: '3px solid var(--primary)', paddingLeft: '0.75rem' }}>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)' }}>Editing message</p>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                    {messages.find(m => m.id === editingMessageId)?.content}
+                  </p>
+                </div>
+                <button onClick={() => { setEditingMessageId(null); setNewMessage(''); }} className="btn btn-icon btn-ghost"><X size={16} /></button>
               </div>
             )}
 
@@ -861,9 +937,16 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
             </div>
           </div>
           {contextMenu.msg.sender_id === currentUser.id && (
-            <button className="context-menu-item danger" onClick={() => deleteForEveryone(contextMenu.msg.id)}>
-              <Trash2 size={15} /> Delete for Everyone
-            </button>
+            <>
+              {contextMenu.msg.type === 'text' && !contextMenu.msg.deleted_for_everyone && (
+                <button className="context-menu-item" onClick={() => editMessage(contextMenu.msg.id, contextMenu.msg.content)}>
+                  Edit Message
+                </button>
+              )}
+              <button className="context-menu-item danger" onClick={() => deleteForEveryone(contextMenu.msg.id)}>
+                <Trash2 size={15} /> Delete for Everyone
+              </button>
+            </>
           )}
         </div>
       )}

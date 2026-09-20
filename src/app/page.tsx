@@ -119,67 +119,13 @@ export default function Home() {
   // --- Main Layout ---
   return (
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-      {/* 1. Main Navigation Sidebar — on mobile it is a fixed top bar */}
-      <div
-        className={(isMobile && !isChatActive) ? 'mobile-top-nav' : ''}
-        style={isMobile ? { display: isChatActive ? 'none' : 'flex' } : {
-
-          width: sidebarOpen ? '240px' : '84px',
-          minWidth: sidebarOpen ? '240px' : '84px',
-          overflow: 'hidden',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          zIndex: 20,
-        }}
-      >
-        <SidebarNav
-          currentView={currentView}
-          setView={setCurrentView}
-          currentUser={currentUser || session.user}
-          unreadTotal={0}
-          onToggle={() => setSidebarOpen(o => !o)}
-          isOpen={sidebarOpen}
-          isMobile={isMobile}
-        />
-      </div>
-
-      {/* 2. Main Content Area — on mobile leaves room for the fixed top bar */}
-      <div className={(isMobile && !isChatActive) ? "mobile-main-content" : ""} style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%' }}>
-        
-        {/* Discover View */}
-        {currentView === 'discover' && (
-          <div className="animate-fade" style={{ width: '100%', height: '100%', display: 'flex' }}>
-            <Discover 
-              currentUser={session.user} 
-              onMessageUser={() => setCurrentView('inbox')} 
-            />
-          </div>
-        )}
-
-        {/* Profile View */}
-        {currentView === 'profile' && (
-          <div className="animate-fade" style={{ width: '100%', height: '100%', display: 'flex' }}>
-            <MyProfile 
-              user={currentUser || session.user} 
-              onProfileUpdated={updated => setCurrentUser(updated)} 
-            />
-          </div>
-        )}
-
-        {/* Inbox View (Chat Component) */}
-        {/* Keep it always rendered but hidden if not active to preserve chat state (avoids re-fetching) */}
-        <div 
-          className={currentView === 'inbox' ? 'animate-fade' : ''} 
-          style={{ 
-            width: '100%', 
-            height: '100%', 
-            display: currentView === 'inbox' ? 'flex' : 'none' 
-          }}
-        >
-          <Chat session={session} onChatActiveChange={setIsChatActive} />
-        </div>
-
-      </div>
+      <Chat 
+        session={session} 
+        onChatActiveChange={setIsChatActive} 
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        currentUserProfile={currentUser}
+      />
     </main>
   );
 }

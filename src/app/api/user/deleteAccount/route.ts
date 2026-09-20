@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Manually clean up related data to avoid FK constraint errors
-    // Delete messages sent by this user
-    await supabaseAdmin.from('messages').delete().eq('sender_id', userId);
+    // Delete messages sent or received by this user
+    await supabaseAdmin.from('messages').delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
 
     // Delete all conversations this user was part of
     await supabaseAdmin.from('conversations').delete().or(`user1_id.eq.${userId},user2_id.eq.${userId}`);

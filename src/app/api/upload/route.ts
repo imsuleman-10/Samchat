@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// ---- Next.js: raise the default 4 MB body-size limit ----
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '150mb',
+    },
+  },
+};
+
 // Server-side upload using service role key — bypasses RLS completely
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB limit
+const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB limit (Supabase free = 1 GB total)
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_SIZE_BYTES) {
-      return NextResponse.json({ error: `File too large. Maximum allowed size is 25 MB. Your file is ${(file.size / (1024*1024)).toFixed(1)} MB.` }, { status: 413 });
+      return NextResponse.json({ error: `File too large. Maximum allowed size is 100 MB. Your file is ${(file.size / (1024*1024)).toFixed(1)} MB.` }, { status: 413 });
     }
 
     const bytes = await file.arrayBuffer();

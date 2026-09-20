@@ -6,22 +6,22 @@
 
 :root {
   /* ---- Dark Background Layers ---- */
-  --bg-primary:    #111827;   /* main background */
-  --bg-secondary:  #1f2937;   /* panels & sidebars */
-  --bg-tertiary:   #374151;   /* cards */
-  --bg-hover:      #374151;   /* hover state */
-  --bg-active:     #4b5563;   /* active/selected */
+  --bg-primary:    #0b141a;   /* main background (chat area) */
+  --bg-secondary:  #111b21;   /* panels & sidebars (chat list) */
+  --bg-tertiary:   #202c33;   /* input areas, headers */
+  --bg-hover:      #202c33;   /* hover state */
+  --bg-active:     #2a3942;   /* active/selected */
 
   /* ---- Surfaces ---- */
-  --surface:          rgba(31, 41, 55, 0.85);
-  --surface-border:   rgba(255, 255, 255, 0.1);
-  --surface-border-strong: rgba(255, 255, 255, 0.18);
+  --surface:          #202c33;
+  --surface-border:   rgba(255, 255, 255, 0.08);
+  --surface-border-strong: rgba(255, 255, 255, 0.15);
 
-  /* ---- Accent (Blue-Violet) ---- */
-  --primary:          #5b8ef0;
-  --primary-hover:    #3d6fdb;
-  --primary-glow:     rgba(91, 142, 240, 0.25);
-  --primary-light:    rgba(91, 142, 240, 0.12);
+  /* ---- Accent (WhatsApp Green) ---- */
+  --primary:          #00a884;
+  --primary-hover:    #008f6f;
+  --primary-glow:     rgba(0, 168, 132, 0.25);
+  --primary-light:    rgba(0, 168, 132, 0.12);
 
   /* ---- Semantic ---- */
   --success:          #22d3a0;
@@ -388,17 +388,18 @@ body {
 
 /* ======== Chat message bubbles ======== */
 .msg-bubble-sent {
-  background: linear-gradient(135deg, #3f6de0 0%, #5b4fcf 100%);
-  color: #fff;
-  border-radius: 20px 20px 4px 20px;
-  box-shadow: 0 4px 12px rgba(91, 142, 240, 0.15);
+  background: #005c4b;
+  color: #e9edef;
+  border-radius: 8px;
+  border-top-right-radius: 0;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
 }
 .msg-bubble-received {
-  background: var(--bg-tertiary);
-  border: 1px solid var(--surface-border-strong);
-  color: var(--text-primary);
-  border-radius: 20px 20px 20px 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: #202c33;
+  color: #e9edef;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
 }
 
 /* ======== Sidebar nav item ======== */

@@ -18,8 +18,10 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Delete user from auth (this will cascade to public.users if references are set up with ON DELETE CASCADE, 
-    // but we didn't specify cascade in the SQL. We should manually delete from public.users first)
+    // Step 1: Clean up related data to avoid foreign key constraints
+    await supabaseAdmin.from('messages').delete().or(`sender_id.eq.${userId},receiver_id.eq.${userId}`);
+
+    // Step 2: Delete from public.users
     const { error: dbError } = await supabaseAdmin.from('users').delete().eq('id', userId);
     
     if (dbError) {

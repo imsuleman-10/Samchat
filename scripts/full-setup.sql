@@ -39,6 +39,7 @@ ALTER TABLE public.messages
   ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS reply_to UUID,
   ADD COLUMN IF NOT EXISTS deleted_for_everyone BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS is_edited BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{}';
 
 -- Disable RLS on messages
