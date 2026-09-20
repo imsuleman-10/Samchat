@@ -117,7 +117,7 @@ export default function Home() {
 
   // --- Main Layout ---
   return (
-    <main className="mobile-main-layout" style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       {/* 1. Main Navigation Sidebar — on mobile it is a fixed bottom bar */}
       <div
         className={isMobile ? 'mobile-bottom-nav' : ''}

@@ -58,17 +58,18 @@
 
 /* ======== Reset ======== */
 *, *::before, *::after { box-sizing: border-box; padding: 0; margin: 0; }
-html, body, #__next { height: 100%; }
-
+html { height: 100%; }
 body {
+  height: 100%;
+  overflow: hidden;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
-  overflow: hidden;
 }
+#__next { height: 100%; display: flex; flex-direction: column; }
 
 /* ======== Scrollbar ======== */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -437,12 +438,13 @@ body {
     flex-direction: column !important;
   }
 
-  /* Main content takes full height, with bottom padding to clear the fixed bottom nav */
+  /* Main content takes remaining flex space, with bottom padding to clear the fixed bottom nav */
   .mobile-main-content {
     width: 100% !important;
     flex: 1 !important;
-    height: 100% !important;
-    padding-bottom: 65px !important;
+    min-height: 0 !important;      /* key: lets flex child shrink below content size */
+    overflow: hidden !important;
+    padding-bottom: 65px !important; /* push content above the fixed 65px bottom nav */
   }
 
   /* Hide elements on mobile */

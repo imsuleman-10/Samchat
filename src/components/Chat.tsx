@@ -424,18 +424,19 @@ export function Chat({ session }: { session: any }) {
   const getReplyMsg = (replyId: string) => messages.find(m => m.id === replyId);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
 
       {/* =============== SIDEBAR =============== */}
       <div className={isMobile && mobileShowChat ? 'hide-on-mobile' : ''} style={{
-        width: isMobile ? '100vw' : 'var(--sidebar-width)',
-        minWidth: isMobile ? '100vw' : 'var(--sidebar-width)',
+        width: isMobile ? '100%' : 'var(--sidebar-width)',
+        minWidth: isMobile ? '100%' : 'var(--sidebar-width)',
         display: 'flex',
         flexDirection: 'column',
         borderRight: isMobile ? 'none' : '1px solid var(--surface-border)',
         background: 'var(--bg-secondary)',
         position: 'relative',
         zIndex: 10,
+        overflow: 'hidden',
       }}>
         {/* Sidebar Header */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -684,7 +685,16 @@ export function Chat({ session }: { session: any }) {
             )}
 
             {/* Input Bar */}
-            <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--surface-border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', position: 'relative' }}>
+            <div style={{
+              padding: isMobile ? '0.5rem 0.5rem' : '0.875rem 1.25rem',
+              borderTop: '1px solid var(--surface-border)',
+              background: 'var(--bg-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? '0.25rem' : '0.5rem',
+              position: 'relative',
+              flexShrink: 0,
+            }}>
 
               {/* Emoji picker */}
               {showEmojiPicker && (
@@ -695,36 +705,36 @@ export function Chat({ session }: { session: any }) {
                 </div>
               )}
 
-              <button className="btn btn-icon btn-ghost" onClick={() => setShowEmojiPicker(v => !v)} title="Emoji"><Smile size={20} /></button>
+              <button className="btn btn-icon btn-ghost" onClick={() => setShowEmojiPicker(v => !v)} title="Emoji"><Smile size={isMobile ? 18 : 20} /></button>
 
               {/* Image upload */}
               <label className="btn btn-icon btn-ghost" title="Send Image" style={{ cursor: 'pointer' }}>
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading || recording} />
-                <ImageIcon size={20} />
+                <ImageIcon size={isMobile ? 18 : 20} />
               </label>
 
               {/* Audio file upload */}
               <label className="btn btn-icon btn-ghost" title="Send Audio File" style={{ cursor: 'pointer' }}>
                 <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading || recording} />
-                <Music size={20} />
+                <Music size={isMobile ? 18 : 20} />
               </label>
 
               {/* Voice record */}
               <button className="btn btn-icon" onClick={recording ? stopRecording : startRecording} disabled={uploading}
-                style={{ background: recording ? 'var(--error)' : 'transparent', color: recording ? 'white' : 'var(--text-secondary)', animation: recording ? 'pulse 1s infinite' : 'none' }}
+                style={{ background: recording ? 'var(--error)' : 'transparent', color: recording ? 'white' : 'var(--text-secondary)', animation: recording ? 'pulse 1s infinite' : 'none', flexShrink: 0 }}
                 title={recording ? 'Stop Recording' : 'Record Voice Message'}>
-                {recording ? <MicOff size={20} /> : <Mic size={20} />}
+                {recording ? <MicOff size={isMobile ? 18 : 20} /> : <Mic size={isMobile ? 18 : 20} />}
               </button>
 
               {/* Text input */}
-              <form onSubmit={e => { e.preventDefault(); sendMessage(newMessage); }} style={{ flex: 1, display: 'flex', gap: '0.5rem' }}>
+              <form onSubmit={e => { e.preventDefault(); sendMessage(newMessage); }} style={{ flex: 1, display: 'flex', gap: '0.35rem', minWidth: 0 }}>
                 <input type="text" className="input" value={newMessage} onChange={e => handleTyping(e.target.value)}
-                  placeholder={uploading ? 'Uploading...' : recording ? '🔴 Recording...' : 'Type a message...'}
+                  placeholder={uploading ? 'Uploading...' : recording ? '🔴 Recording...' : 'Message...'}
                   disabled={uploading || recording}
-                  style={{ borderRadius: '99px', paddingLeft: '1.25rem' }}
+                  style={{ borderRadius: '99px', paddingLeft: '1rem', fontSize: isMobile ? '0.875rem' : '0.9rem', minWidth: 0 }}
                 />
-                <button type="submit" className="btn btn-primary btn-icon" disabled={!newMessage.trim() || uploading || recording} style={{ width: '42px', height: '42px', borderRadius: '50%', flexShrink: 0 }}>
-                  <Send size={18} style={{ marginLeft: '2px' }} />
+                <button type="submit" className="btn btn-primary btn-icon" disabled={!newMessage.trim() || uploading || recording} style={{ width: isMobile ? '38px' : '42px', height: isMobile ? '38px' : '42px', borderRadius: '50%', flexShrink: 0 }}>
+                  <Send size={isMobile ? 16 : 18} style={{ marginLeft: '2px' }} />
                 </button>
               </form>
             </div>
