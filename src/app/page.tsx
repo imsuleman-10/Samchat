@@ -19,6 +19,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isChatActive, setIsChatActive] = useState(false);
+  const [pendingChatUser, setPendingChatUser] = useState<any>(null);
 
   // Detect mobile and respond to resize
   useEffect(() => {
@@ -116,7 +117,6 @@ export default function Home() {
     return <AdminDashboard />;
   }
 
-  const [pendingChatUser, setPendingChatUser] = useState<any>(null);
 
   // --- Main Layout ---
   return (
