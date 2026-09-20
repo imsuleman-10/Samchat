@@ -7,6 +7,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB limit
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -15,6 +17,10 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      return NextResponse.json({ error: `File too large. Maximum allowed size is 25 MB. Your file is ${(file.size / (1024*1024)).toFixed(1)} MB.` }, { status: 413 });
     }
 
     const bytes = await file.arrayBuffer();

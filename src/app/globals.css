@@ -247,6 +247,21 @@ body {
 .tick-sent { color: var(--text-muted); }
 .tick-read { color: #60a5fa; }
 
+/* ======== Custom Audio Slider (AudioPlayer component) ======== */
+.audio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: currentColor;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+.audio-slider::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%; border: none;
+  background: currentColor;
+  cursor: pointer;
+}
+
 /* ======== Animations ======== */
 @keyframes fadeIn      { from { opacity: 0; transform: translateY(6px); }  to { opacity: 1; transform: translateY(0); } }
 @keyframes scaleIn     { from { opacity: 0; transform: scale(0.92); }       to { opacity: 1; transform: scale(1); } }

@@ -306,6 +306,12 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
     const file = e.target.files?.[0];
     if (!file || !selectedUser) return;
     e.target.value = '';
+
+    const MAX_MB = 25;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setMicError(`File too large! Max allowed size is ${MAX_MB} MB. Your file is ${(file.size / (1024*1024)).toFixed(1)} MB.`);
+      return;
+    }
     
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -708,7 +714,10 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
 
             {/* Input Bar */}
             <div style={{
-              padding: isMobile ? '0.5rem' : '0.875rem 1.25rem',
+              paddingTop: isMobile ? '0.5rem' : '0.875rem',
+              paddingLeft: isMobile ? '0.5rem' : '1.25rem',
+              paddingRight: isMobile ? '0.5rem' : '1.25rem',
+              paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)' : '0.875rem',
               borderTop: '1px solid var(--surface-border)',
               background: 'var(--bg-secondary)',
               display: 'flex',
@@ -716,7 +725,6 @@ export function Chat({ session, onChatActiveChange }: { session: any, onChatActi
               gap: '0.5rem',
               position: 'relative',
               flexShrink: 0,
-              paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)' : '0.875rem',
             }}>
 
               {/* Attachments Menu Popover */}
