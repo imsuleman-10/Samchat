@@ -198,6 +198,7 @@ export default function Home() {
             onChatActiveChange={setIsChatActive}
             initialSelectedUser={pendingChatUser}
             onInitialUserConsumed={() => setPendingChatUser(null)}
+            setCurrentView={setCurrentView}
           />
         </div>
 

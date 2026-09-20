@@ -60,12 +60,14 @@ export function Chat({
   session, 
   onChatActiveChange,
   initialSelectedUser,
-  onInitialUserConsumed
+  onInitialUserConsumed,
+  setCurrentView
 }: { 
   session: any, 
   onChatActiveChange?: (active: boolean) => void,
   initialSelectedUser?: any,
-  onInitialUserConsumed?: () => void
+  onInitialUserConsumed?: () => void,
+  setCurrentView?: (view: string) => void
 }) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
@@ -558,7 +560,7 @@ export function Chat({
                 {searchQuery ? `Results for "${searchQuery}"` : 'Recent Chats'}
               </p>
               {filteredUsers.map(user => (
-                <div key={user.id} onClick={() => { setSelectedUser(user); setMobileShowChat(true); }}
+                <div key={user.id} onClick={() => { setSelectedUser(user); setMobileShowChat(true); setCurrentView?.('inbox'); }}
                   style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', cursor: 'pointer', transition: 'var(--transition-fast)', background: selectedUser?.id === user.id ? 'var(--bg-active)' : 'transparent', borderBottom: '1px solid var(--surface-border)' }}
                   onMouseEnter={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
                   onMouseLeave={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
