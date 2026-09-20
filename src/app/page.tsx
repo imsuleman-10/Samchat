@@ -116,6 +116,8 @@ export default function Home() {
     return <AdminDashboard />;
   }
 
+  const [pendingChatUser, setPendingChatUser] = useState<any>(null);
+
   // --- Main Layout ---
   return (
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
@@ -150,7 +152,7 @@ export default function Home() {
           <div className="animate-fade" style={{ width: '100%', height: '100%', display: 'flex' }}>
             <Discover 
               currentUser={session.user} 
-              onMessageUser={() => setCurrentView('inbox')} 
+              onMessageUser={(user) => { setPendingChatUser(user); setCurrentView('inbox'); }} 
             />
           </div>
         )}
@@ -175,7 +177,12 @@ export default function Home() {
             display: currentView === 'inbox' ? 'flex' : 'none' 
           }}
         >
-          <Chat session={session} onChatActiveChange={setIsChatActive} />
+          <Chat 
+            session={session} 
+            onChatActiveChange={setIsChatActive}
+            initialSelectedUser={pendingChatUser}
+            onInitialUserConsumed={() => setPendingChatUser(null)}
+          />
         </div>
 
       </div>

@@ -58,10 +58,14 @@ function formatLastSeen(ts: string) {
 
 export function Chat({ 
   session, 
-  onChatActiveChange 
+  onChatActiveChange,
+  initialSelectedUser,
+  onInitialUserConsumed
 }: { 
   session: any, 
-  onChatActiveChange?: (active: boolean) => void 
+  onChatActiveChange?: (active: boolean) => void,
+  initialSelectedUser?: any,
+  onInitialUserConsumed?: () => void
 }) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
@@ -152,10 +156,46 @@ export function Chat({
     return () => window.removeEventListener('beforeunload', handleUnload);
   }, [currentUser]);
 
-  // ---- Fetch users ----
+  // ---- Consume initialSelectedUser from Discover ----
+  useEffect(() => {
+    if (initialSelectedUser) {
+      setSelectedUser(initialSelectedUser);
+      setMobileShowChat(true);
+      onInitialUserConsumed?.();
+    }
+  }, [initialSelectedUser]);
+
+  // ---- Fetch users (only people with existing conversations) ----
   useEffect(() => {
     const fetchUsers = async () => {
-      const { data } = await supabase.from('users').select('*').neq('id', currentUser.id).neq('email', ADMIN_EMAIL).order('is_online', { ascending: false });
+      // Get IDs of everyone I've exchanged messages with
+      const { data: sentMsgs } = await supabase
+        .from('messages')
+        .select('receiver_id')
+        .eq('sender_id', currentUser.id);
+      const { data: recvMsgs } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('receiver_id', currentUser.id);
+
+      const contactIds = new Set<string>();
+      sentMsgs?.forEach(m => contactIds.add(m.receiver_id));
+      recvMsgs?.forEach(m => contactIds.add(m.sender_id));
+
+      if (contactIds.size === 0) {
+        setUsers([]);
+        setFilteredUsers([]);
+        setLoadingUsers(false);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', Array.from(contactIds))
+        .neq('email', ADMIN_EMAIL)
+        .order('is_online', { ascending: false });
+
       if (data) { setUsers(data); setFilteredUsers(data); }
       setLoadingUsers(false);
     };
@@ -301,6 +341,15 @@ export function Chat({
         deleted_for_everyone: false,
         is_edited: false,
         reactions: {},
+      });
+      // Add to sidebar if this is a new conversation
+      setUsers(prev => {
+        if (prev.find(u => u.id === selectedUser.id)) return prev;
+        return [selectedUser, ...prev];
+      });
+      setFilteredUsers(prev => {
+        if (prev.find(u => u.id === selectedUser.id)) return prev;
+        return [selectedUser, ...prev];
       });
     }
 
@@ -500,12 +549,13 @@ export function Chat({
           ) : filteredUsers.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
               <Users size={36} style={{ marginBottom: '0.75rem', opacity: 0.4 }} />
-              <p>{searchQuery ? 'No users found.' : 'No other users yet.'}</p>
+              <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>{searchQuery ? 'No chats found.' : 'No conversations yet.'}</p>
+              {!searchQuery && <p style={{ fontSize: '0.8rem' }}>Go to Discover to start chatting!</p>}
             </div>
           ) : (
             <>
               <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0.5rem 0.75rem 0.25rem' }}>
-                {searchQuery ? `Results for "${searchQuery}"` : 'All Users'}
+                {searchQuery ? `Results for "${searchQuery}"` : 'Recent Chats'}
               </p>
               {filteredUsers.map(user => (
                 <div key={user.id} onClick={() => { setSelectedUser(user); setMobileShowChat(true); }}
