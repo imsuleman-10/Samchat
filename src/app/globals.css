@@ -420,28 +420,25 @@ body {
 
 /* ======== Mobile Responsiveness ======== */
 @media (max-width: 768px) {
-  /* Mobile bottom navigation bar */
-  .mobile-bottom-nav {
+  /* Mobile top navigation bar */
+  .mobile-top-nav {
     position: fixed !important;
-    bottom: 0;
+    top: 0;
     left: 0;
     width: 100% !important;
-    height: 65px !important;
+    height: calc(60px + env(safe-area-inset-top, 0px)) !important;
     z-index: 1000;
     background: rgba(17, 24, 39, 0.85) !important;
     backdrop-filter: blur(24px) saturate(1.8) !important;
     -webkit-backdrop-filter: blur(24px) saturate(1.8) !important;
-    border-top: 1px solid var(--surface-border);
-    border-right: none !important;
+    border-bottom: 1px solid var(--surface-border);
     display: flex !important;
     flex-direction: row !important;
-    justify-content: space-around !important;
+    justify-content: space-between !important;
     align-items: center !important;
-    padding: 0 0.5rem !important;
+    padding: env(safe-area-inset-top, 0px) 1rem 0 1rem !important;
     gap: 0 !important;
-    /* Support for phones with home indicator (safe area) */
-    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
   }
 
   /* The main wrapper becomes a simple column but the sidebar is fixed, so no need for row/col change */
@@ -449,13 +446,14 @@ body {
     flex-direction: column !important;
   }
 
-  /* Main content takes remaining flex space, with bottom padding to clear the fixed bottom nav */
+  /* Main content takes remaining flex space, with top padding to clear the fixed top nav */
   .mobile-main-content {
     width: 100% !important;
     flex: 1 !important;
     min-height: 0 !important;      /* key: lets flex child shrink below content size */
     overflow: hidden !important;
-    padding-bottom: 65px !important; /* push content above the fixed 65px bottom nav */
+    padding-top: calc(60px + env(safe-area-inset-top, 0px)) !important; /* push content below top nav */
+    padding-bottom: 0 !important;
   }
 
   /* Hide elements on mobile */

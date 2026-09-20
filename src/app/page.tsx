@@ -119,9 +119,9 @@ export default function Home() {
   // --- Main Layout ---
   return (
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-      {/* 1. Main Navigation Sidebar — on mobile it is a fixed bottom bar */}
+      {/* 1. Main Navigation Sidebar — on mobile it is a fixed top bar */}
       <div
-        className={(isMobile && !isChatActive) ? 'mobile-bottom-nav' : ''}
+        className={(isMobile && !isChatActive) ? 'mobile-top-nav' : ''}
         style={isMobile ? { display: isChatActive ? 'none' : 'flex' } : {
 
           width: sidebarOpen ? '240px' : '84px',
@@ -143,7 +143,7 @@ export default function Home() {
         />
       </div>
 
-      {/* 2. Main Content Area — on mobile leaves room for the fixed bottom bar */}
+      {/* 2. Main Content Area — on mobile leaves room for the fixed top bar */}
       <div className={(isMobile && !isChatActive) ? "mobile-main-content" : ""} style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%' }}>
         
         {/* Discover View */}
