@@ -6,7 +6,7 @@ import {
   Send, Paperclip, Mic, MicOff, Download, X, Search,
   Check, CheckCheck, Reply, Trash2, Smile, Image as ImageIcon,
   Music, MoreVertical, Info, ChevronLeft,
-  Users
+  Users, MessageSquare
 } from "lucide-react";
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/cropImage';
@@ -67,7 +67,7 @@ export function Chat({
   onChatActiveChange?: (active: boolean) => void,
   initialSelectedUser?: any,
   onInitialUserConsumed?: () => void,
-  setCurrentView?: (view: string) => void
+  setCurrentView?: (view: any) => void
 }) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
@@ -630,18 +630,6 @@ export function Chat({
           </div>
         )}
 
-        {/* Discover Full View */}
-        {currentView === 'discover' && (
-          <div className="animate-fade" style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.25rem 1.5rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button className="btn btn-icon btn-ghost" onClick={() => setCurrentView?.('inbox')}><ChevronLeft size={20} /></button>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Discover People</h2>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              <Discover currentUser={currentUser} onMessageUser={(u) => { setSelectedUser(u); setCurrentView?.('inbox'); setMobileShowChat(true); }} />
-            </div>
-          </div>
-        )}
 
         {selectedUser ? (
           <>
