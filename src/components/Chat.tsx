@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/cropImage';
+import { AudioPlayer } from './AudioPlayer';
 
 const ADMIN_EMAIL = 'samstacktechs@gmail.com';
 const EMOJIS = ['😀','😂','❤️','👍','👎','😮','😢','😡','🎉','🔥','👏','🙏','😍','🤔','💪','✅'];
@@ -54,7 +55,7 @@ function formatLastSeen(ts: string) {
   return d.toLocaleDateString();
 }
 
-export function Chat({ session }: { session: any }) {
+export function Chat({ session, onChatActiveChange }: { session: any, onChatActiveChange?: (active: boolean) => void }) {
   const currentUser = session.user;
   const isAdmin = currentUser.email === ADMIN_EMAIL;
 
@@ -79,6 +80,7 @@ export function Chat({ session }: { session: any }) {
   const [replyTo, setReplyTo] = useState<any>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; msg: any } | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [otherTyping, setOtherTyping] = useState(false);
@@ -94,6 +96,12 @@ export function Chat({ session }: { session: any }) {
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
+
+  useEffect(() => {
+    if (onChatActiveChange) {
+      onChatActiveChange(isMobile && mobileShowChat);
+    }
+  }, [isMobile, mobileShowChat, onChatActiveChange]);
 
   // Crop State
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -634,9 +642,11 @@ export function Chat({ session }: { session: any }) {
                                 </button>
                               </div>
                             ) : msg.type === 'audio' && msg.file_url ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: '200px' }}>
-                                <audio controls src={msg.file_url} style={{ flex: 1, height: '36px' }} />
-                                <button onClick={() => handleDownload(msg.file_url, `audio-${Date.now()}.webm`)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }} title="Download"><Download size={18} /></button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <AudioPlayer src={msg.file_url} isMine={isMine} />
+                                <button onClick={() => handleDownload(msg.file_url, `audio-${Date.now()}.webm`)} className="btn btn-ghost btn-icon" style={{ padding: '0.25rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }} title="Download">
+                                  <Download size={16} />
+                                </button>
                               </div>
                             ) : null}
 
@@ -698,56 +708,92 @@ export function Chat({ session }: { session: any }) {
 
             {/* Input Bar */}
             <div style={{
-              padding: isMobile ? '0.5rem 0.5rem' : '0.875rem 1.25rem',
+              padding: isMobile ? '0.5rem' : '0.875rem 1.25rem',
               borderTop: '1px solid var(--surface-border)',
               background: 'var(--bg-secondary)',
               display: 'flex',
               alignItems: 'center',
-              gap: isMobile ? '0.25rem' : '0.5rem',
+              gap: '0.5rem',
               position: 'relative',
               flexShrink: 0,
+              paddingBottom: isMobile ? 'calc(env(safe-area-inset-bottom, 0px) + 0.5rem)' : '0.875rem',
             }}>
 
-              {/* Emoji picker */}
-              {showEmojiPicker && (
-                <div className="emoji-picker" style={{ bottom: '100%', left: '1rem' }}>
-                  {EMOJIS.map(e => (
-                    <button key={e} className="emoji-btn" onClick={() => { setNewMessage(m => m + e); setShowEmojiPicker(false); }}>{e}</button>
-                  ))}
+              {/* Attachments Menu Popover */}
+              {showAttachments && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '0.5rem',
+                  marginBottom: '0.5rem',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--surface-border-strong)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.5rem',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 100,
+                  animation: 'scaleIn 0.1s ease',
+                }}>
+                  <label className="btn btn-ghost" title="Send Image" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => { handleFileUpload(e); setShowAttachments(false); }} disabled={uploading || recording} />
+                    <ImageIcon size={18} /> <span style={{ fontSize: '0.85rem' }}>Image</span>
+                  </label>
+                  <label className="btn btn-ghost" title="Send Audio File" style={{ cursor: 'pointer', display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+                    <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={(e) => { handleFileUpload(e); setShowAttachments(false); }} disabled={uploading || recording} />
+                    <Music size={18} /> <span style={{ fontSize: '0.85rem' }}>Audio</span>
+                  </label>
                 </div>
               )}
 
-              <button className="btn btn-icon btn-ghost" onClick={() => setShowEmojiPicker(v => !v)} title="Emoji"><Smile size={isMobile ? 18 : 20} /></button>
-
-              {/* Image upload */}
-              <label className="btn btn-icon btn-ghost" title="Send Image" style={{ cursor: 'pointer' }}>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading || recording} />
-                <ImageIcon size={isMobile ? 18 : 20} />
-              </label>
-
-              {/* Audio file upload */}
-              <label className="btn btn-icon btn-ghost" title="Send Audio File" style={{ cursor: 'pointer' }}>
-                <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploading || recording} />
-                <Music size={isMobile ? 18 : 20} />
-              </label>
-
-              {/* Voice record */}
-              <button className="btn btn-icon" onClick={recording ? stopRecording : startRecording} disabled={uploading}
-                style={{ background: recording ? 'var(--error)' : 'transparent', color: recording ? 'white' : 'var(--text-secondary)', animation: recording ? 'pulse 1s infinite' : 'none', flexShrink: 0 }}
-                title={recording ? 'Stop Recording' : 'Record Voice Message'}>
-                {recording ? <MicOff size={isMobile ? 18 : 20} /> : <Mic size={isMobile ? 18 : 20} />}
+              {/* Plus Button */}
+              <button 
+                className="btn btn-icon btn-ghost" 
+                onClick={() => { setShowAttachments(v => !v); setShowEmojiPicker(false); }} 
+                title="Attachments"
+                style={{ background: showAttachments ? 'var(--bg-active)' : 'transparent', flexShrink: 0 }}
+              >
+                <Paperclip size={20} style={{ transform: showAttachments ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
 
-              {/* Text input */}
-              <form onSubmit={e => { e.preventDefault(); sendMessage(newMessage); }} style={{ flex: 1, display: 'flex', gap: '0.35rem', minWidth: 0 }}>
-                <input type="text" className="input" value={newMessage} onChange={e => handleTyping(e.target.value)}
+              {/* Text input area wrapper */}
+              <form onSubmit={e => { e.preventDefault(); sendMessage(newMessage); }} style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1.5px solid var(--surface-border-strong)', borderRadius: '24px', padding: '0.2rem 0.5rem', minWidth: 0, gap: '0.25rem' }}>
+                
+                {/* Emoji button inside input */}
+                <div style={{ position: 'relative' }}>
+                  <button type="button" className="btn btn-icon btn-ghost" onClick={() => { setShowEmojiPicker(v => !v); setShowAttachments(false); }} title="Emoji" style={{ width: '32px', height: '32px', padding: '0' }}>
+                    <Smile size={20} color={showEmojiPicker ? 'var(--primary)' : 'var(--text-muted)'} />
+                  </button>
+                  {/* Emoji picker */}
+                  {showEmojiPicker && (
+                    <div className="emoji-picker" style={{ bottom: '100%', left: '0', marginBottom: '1rem' }}>
+                      {EMOJIS.map(e => (
+                        <button type="button" key={e} className="emoji-btn" onClick={() => { setNewMessage(m => m + e); setShowEmojiPicker(false); }}>{e}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <input type="text" value={newMessage} onChange={e => handleTyping(e.target.value)}
                   placeholder={uploading ? 'Uploading...' : recording ? '🔴 Recording...' : 'Message...'}
                   disabled={uploading || recording}
-                  style={{ borderRadius: '99px', paddingLeft: '1rem', fontSize: isMobile ? '0.875rem' : '0.9rem', minWidth: 0 }}
+                  style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: isMobile ? '0.95rem' : '0.9rem', padding: '0.4rem 0.2rem', minWidth: 0 }}
                 />
-                <button type="submit" className="btn btn-primary btn-icon" disabled={!newMessage.trim() || uploading || recording} style={{ width: isMobile ? '38px' : '42px', height: isMobile ? '38px' : '42px', borderRadius: '50%', flexShrink: 0 }}>
-                  <Send size={isMobile ? 16 : 18} style={{ marginLeft: '2px' }} />
-                </button>
+
+                {/* Right side inside input: Send OR Mic */}
+                {newMessage.trim() ? (
+                  <button type="submit" className="btn btn-primary btn-icon" disabled={uploading || recording} style={{ width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0, padding: 0 }}>
+                    <Send size={16} style={{ marginLeft: '2px' }} />
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-icon" onClick={recording ? stopRecording : startRecording} disabled={uploading}
+                    style={{ background: recording ? 'var(--error)' : 'transparent', color: recording ? 'white' : 'var(--text-secondary)', animation: recording ? 'pulse 1s infinite' : 'none', flexShrink: 0, width: '34px', height: '34px', padding: 0 }}
+                    title={recording ? 'Stop Recording' : 'Record Voice Message'}>
+                    {recording ? <MicOff size={18} /> : <Mic size={20} color={recording ? 'white' : 'var(--text-muted)'} />}
+                  </button>
+                )}
               </form>
             </div>
           </>

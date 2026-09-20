@@ -18,6 +18,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isChatActive, setIsChatActive] = useState(false);
 
   // Detect mobile and respond to resize
   useEffect(() => {
@@ -120,8 +121,9 @@ export default function Home() {
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
       {/* 1. Main Navigation Sidebar — on mobile it is a fixed bottom bar */}
       <div
-        className={isMobile ? 'mobile-bottom-nav' : ''}
-        style={isMobile ? {} : {
+        className={(isMobile && !isChatActive) ? 'mobile-bottom-nav' : ''}
+        style={isMobile ? { display: isChatActive ? 'none' : 'flex' } : {
+
           width: sidebarOpen ? '240px' : '84px',
           minWidth: sidebarOpen ? '240px' : '84px',
           overflow: 'hidden',
@@ -142,7 +144,7 @@ export default function Home() {
       </div>
 
       {/* 2. Main Content Area — on mobile leaves room for the fixed bottom bar */}
-      <div className="mobile-main-content" style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+      <div className={(isMobile && !isChatActive) ? "mobile-main-content" : ""} style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative', width: '100%' }}>
         
         {/* Discover View */}
         {currentView === 'discover' && (
@@ -174,7 +176,7 @@ export default function Home() {
             display: currentView === 'inbox' ? 'flex' : 'none' 
           }}
         >
-          <Chat session={session} />
+          <Chat session={session} onChatActiveChange={setIsChatActive} />
         </div>
 
       </div>
