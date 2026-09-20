@@ -183,7 +183,7 @@ export function MyProfile({ user, onProfileUpdated }: { user: any, onProfileUpda
         </div>
       )}
 
-      <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+      <div className="mobile-p-4" style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto', width: '100%' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '2rem' }}>My Profile</h1>
         
         {message && (

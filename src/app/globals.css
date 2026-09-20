@@ -408,3 +408,74 @@ body {
   border-radius: var(--radius-lg);
   padding: 1.25rem;
 }
+
+/* ======== Mobile Responsiveness ======== */
+@media (max-width: 768px) {
+  /* Mobile bottom navigation bar */
+  .mobile-bottom-nav {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    width: 100% !important;
+    height: 65px !important;
+    z-index: 1000;
+    background: var(--bg-secondary) !important;
+    border-top: 1px solid var(--surface-border);
+    border-right: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 0 0.5rem !important;
+    gap: 0 !important;
+    /* Support for phones with home indicator (safe area) */
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  /* The main wrapper becomes a simple column but the sidebar is fixed, so no need for row/col change */
+  .mobile-main-layout {
+    flex-direction: column !important;
+  }
+
+  /* Main content takes full height, with bottom padding to clear the fixed bottom nav */
+  .mobile-main-content {
+    width: 100% !important;
+    flex: 1 !important;
+    height: 100% !important;
+    padding-bottom: 65px !important;
+  }
+
+  /* Hide elements on mobile */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Responsive grid: stack to 1 column on mobile */
+  .mobile-grid-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Full width utility */
+  .mobile-w-full {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Smaller padding on mobile */
+  .mobile-p-4 {
+    padding: 1rem !important;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal {
+    padding: 1.5rem !important;
+    width: calc(100% - 2rem) !important;
+    max-width: calc(100% - 2rem) !important;
+    margin: 1rem !important;
+  }
+
+  /* Context menu — ensure it fits on screen */
+  .context-menu {
+    min-width: 140px;
+  }
+}

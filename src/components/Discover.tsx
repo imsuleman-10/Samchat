@@ -35,9 +35,9 @@ export function Discover({ currentUser, onMessageUser }: { currentUser: any, onM
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', overflowY: 'auto', position: 'relative' }}>
       
       {/* Header & Search */}
-      <div style={{ padding: '2rem 2rem 1rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      <div className="mobile-p-4" style={{ padding: '2rem 2rem 1rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem' }}>Discover People</h1>
-        <div style={{ position: 'relative', maxWidth: '400px' }}>
+        <div className="mobile-w-full" style={{ position: 'relative', maxWidth: '400px' }}>
           <Search size={18} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
@@ -51,7 +51,7 @@ export function Discover({ currentUser, onMessageUser }: { currentUser: any, onM
       </div>
 
       {/* User Grid */}
-      <div style={{ padding: '1rem 2rem 3rem', maxWidth: '1000px', margin: '0 auto', width: '100%', flex: 1 }}>
+      <div className="mobile-p-4" style={{ padding: '1rem 2rem 3rem', maxWidth: '1000px', margin: '0 auto', width: '100%', flex: 1 }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Loading users...</div>
         ) : filteredUsers.length === 0 ? (
@@ -60,7 +60,7 @@ export function Discover({ currentUser, onMessageUser }: { currentUser: any, onM
             No users found matching your search.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+          <div className="mobile-grid-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
             {filteredUsers.map(user => (
               <div 
                 key={user.id} 

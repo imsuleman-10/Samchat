@@ -17,12 +17,15 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('discover');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Auto-collapse sidebar on mobile
+  // Detect mobile and respond to resize
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    if (window.innerWidth < 768) setSidebarOpen(false);
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -114,28 +117,32 @@ export default function Home() {
 
   // --- Main Layout ---
   return (
-    <main style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
-      {/* 1. Main Navigation Sidebar */}
-      <div style={{
-        width: sidebarOpen ? '240px' : '84px',
-        minWidth: sidebarOpen ? '240px' : '84px',
-        overflow: 'hidden',
-        transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        position: 'relative',
-        zIndex: 20,
-      }}>
-        <SidebarNav 
-          currentView={currentView} 
-          setView={setCurrentView} 
+    <main className="mobile-main-layout" style={{ height: '100vh', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
+      {/* 1. Main Navigation Sidebar — on mobile it is a fixed bottom bar */}
+      <div
+        className={isMobile ? 'mobile-bottom-nav' : ''}
+        style={isMobile ? {} : {
+          width: sidebarOpen ? '240px' : '84px',
+          minWidth: sidebarOpen ? '240px' : '84px',
+          overflow: 'hidden',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          zIndex: 20,
+        }}
+      >
+        <SidebarNav
+          currentView={currentView}
+          setView={setCurrentView}
           currentUser={currentUser || session.user}
-          unreadTotal={0} 
+          unreadTotal={0}
           onToggle={() => setSidebarOpen(o => !o)}
           isOpen={sidebarOpen}
+          isMobile={isMobile}
         />
       </div>
 
-      {/* 2. Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+      {/* 2. Main Content Area — on mobile leaves room for the fixed bottom bar */}
+      <div className="mobile-main-content" style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
         
         {/* Discover View */}
         {currentView === 'discover' && (

@@ -84,6 +84,16 @@ export function Chat({ session }: { session: any }) {
   const [otherTyping, setOtherTyping] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [mobileShowChat, setMobileShowChat] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMobile(window.innerWidth < 768);
+      const handleResize = () => setIsMobile(window.innerWidth < 768);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   // Crop State
   const [imageSrc, setImageSrc] = useState<string | null>(null);
@@ -417,16 +427,15 @@ export function Chat({ session }: { session: any }) {
     <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: 'var(--bg-primary)' }}>
 
       {/* =============== SIDEBAR =============== */}
-      <div style={{
-        width: 'var(--sidebar-width)',
-        minWidth: 'var(--sidebar-width)',
+      <div className={isMobile && mobileShowChat ? 'hide-on-mobile' : ''} style={{
+        width: isMobile ? '100vw' : 'var(--sidebar-width)',
+        minWidth: isMobile ? '100vw' : 'var(--sidebar-width)',
         display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid var(--surface-border)',
+        borderRight: isMobile ? 'none' : '1px solid var(--surface-border)',
         background: 'var(--bg-secondary)',
         position: 'relative',
         zIndex: 10,
-        ...(mobileShowChat ? { display: 'none' } : {}),
       }}>
         {/* Sidebar Header */}
         <div style={{ padding: '1.25rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
@@ -485,7 +494,7 @@ export function Chat({ session }: { session: any }) {
       </div>
 
       {/* =============== CHAT AREA =============== */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, ...(mobileShowChat === false && window.innerWidth < 768 ? { display: 'none' } : {}) }}>
+      <div className={isMobile && !mobileShowChat ? 'hide-on-mobile' : ''} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         
         {/* Image Crop Modal */}
         {imageSrc && (
@@ -536,7 +545,7 @@ export function Chat({ session }: { session: any }) {
           <>
             {/* Chat Header */}
             <div style={{ padding: '0.875rem 1.5rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-secondary)', flexShrink: 0 }}>
-              <button onClick={() => setMobileShowChat(false)} className="btn btn-icon btn-ghost" style={{ display: 'none' }}><ChevronLeft size={20} /></button>
+              <button onClick={() => { setMobileShowChat(false); setSelectedUser(null); }} className="btn btn-icon btn-ghost" style={{ display: isMobile ? 'flex' : 'none' }}><ChevronLeft size={20} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flex: 1, cursor: 'pointer' }} onClick={() => setShowProfile(v => !v)}>
                 <Avatar user={selectedUser} size="md" showOnline />
                 <div>
