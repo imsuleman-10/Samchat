@@ -15,17 +15,37 @@ export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<View>('discover');
+  const [previousView, setPreviousView] = useState<View>('discover');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sidebar is always narrow icon-only strip (WhatsApp Web style)
   const [isMobile, setIsMobile] = useState(false);
   const [isChatActive, setIsChatActive] = useState(false);
   const [pendingChatUser, setPendingChatUser] = useState<any>(null);
 
   // Detect mobile and respond to resize
+  // Handle back button (hardware/browser back)
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (currentView === 'profile') {
+        setCurrentView(previousView);
+      } else if (isMobile && isChatActive) {
+        setIsChatActive(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentView, previousView, isMobile, isChatActive]);
+
+  // Push state when chat opens on mobile
+  useEffect(() => {
+    if (isMobile && isChatActive) {
+      window.history.pushState({ panel: 'chat' }, '');
+    }
+  }, [isChatActive, isMobile]);
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
-    if (window.innerWidth < 768) setSidebarOpen(false);
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -118,6 +138,15 @@ export default function Home() {
   }
 
 
+  const handleSetView = (view: View) => {
+    if (view === 'profile' && currentView !== 'profile') {
+      setPreviousView(currentView);
+      window.history.pushState({ panel: 'profile' }, '');
+    }
+    setCurrentView(view);
+  };
+
+
   // --- Main Layout ---
   return (
     <main className="mobile-main-layout" style={{ height: '100%', display: 'flex', overflow: 'hidden', background: 'var(--bg-primary)' }}>
@@ -126,21 +155,18 @@ export default function Home() {
       <div
         className={(isMobile && !isChatActive) ? 'mobile-top-nav' : ''}
         style={isMobile ? { display: isChatActive ? 'none' : 'flex' } : {
-          width: sidebarOpen ? '240px' : '84px',
-          minWidth: sidebarOpen ? '240px' : '84px',
-          overflow: 'hidden',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          width: '84px',
+          minWidth: '84px',
+          flexShrink: 0,
           position: 'relative',
           zIndex: 20,
         }}
       >
         <SidebarNav
           currentView={currentView}
-          setView={setCurrentView}
+          setView={handleSetView}
           currentUser={currentUser || session.user}
           unreadTotal={0}
-          onToggle={() => setSidebarOpen(o => !o)}
-          isOpen={sidebarOpen}
           isMobile={isMobile}
         />
       </div>
@@ -165,7 +191,10 @@ export default function Home() {
             {/* Back header */}
             <div style={{ padding: '1rem 1.5rem', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
               <button
-                onClick={() => setCurrentView('inbox')}
+                onClick={() => {
+                  if (window.history.state?.panel === 'profile') window.history.back();
+                  else setCurrentView(previousView);
+                }}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.75rem', borderRadius: '8px', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 500 }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'none'}

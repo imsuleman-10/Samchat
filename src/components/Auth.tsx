@@ -351,177 +351,188 @@ export function Auth() {
     );
   }
 
-  // Render Login / Signup UI
+  // ---- Main Login / Signup — Split-Screen Layout ----
   return (
     <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-      position: 'relative',
-      overflow: 'hidden',
+      minHeight: '100vh', display: 'flex', overflow: 'hidden',
+      background: 'var(--bg-primary)',
     }}>
+      {/* ---- LEFT HERO PANEL ---- */}
       <div style={{
-        background: 'var(--bg-secondary)',
-        padding: '2.5rem',
-        borderRadius: '24px',
-        width: '100%',
-        maxWidth: '440px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.05)',
-        position: 'relative',
-        zIndex: 10,
-      }}>
-        
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <img src="/logo.png" alt="Logo" style={{ width: '70px', height: '70px', objectFit: 'contain' }} />
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: 'linear-gradient(160deg, #0d1f27 0%, #0b141a 40%, #0d2418 100%)',
+        borderRight: '1px solid var(--surface-border)',
+        padding: '3rem 2rem', position: 'relative', overflow: 'hidden',
+      }} className="hide-on-mobile">
+        {/* Background glow orbs */}
+        <div style={{ position: 'absolute', top: '15%', left: '20%', width: 300, height: 300, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,168,132,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '20%', right: '15%', width: 250, height: 250, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,168,132,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        {/* Logo */}
+        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: 90, height: 90, borderRadius: '26px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,168,132,0.4)', animation: 'heroFloat 4s ease-in-out infinite' }}>
+            <img src="/logo.png" alt="Sam Chat" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>Sam Chat</h1>
+          <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 280, lineHeight: 1.6 }}>
+            Connect instantly with people around the world
+          </p>
         </div>
 
-        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, textAlign: 'center', marginBottom: '0.5rem', background: 'linear-gradient(to right, #ffffff, #a5b4fc)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
-          {isLogin ? 'Welcome back' : 'Create an account'}
-        </h2>
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.95rem' }}>
-          {isLogin ? 'Enter your details to access your account' : 'Join Sam Chat to connect with friends'}
-        </p>
-
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-            {error}
+        {/* Animated floating message bubbles */}
+        <div style={{ position: 'relative', width: '100%', maxWidth: 340, marginTop: '1rem' }}>
+          {/* Bubble 1 — received */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', marginBottom: '0.75rem', animation: 'slideInLeft 0.5s 0.1s ease both' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(160, 55%, 25%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', color: '#fff', flexShrink: 0 }}>S</div>
+            <div style={{ background: 'var(--received-bubble)', borderRadius: '8px 8px 8px 2px', padding: '0.6rem 0.9rem', maxWidth: '70%', border: '1px solid var(--surface-border)' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>Hey! Just tried Sam Chat — it&apos;s amazing! 🚀</p>
+              <p style={{ fontSize: '0.65rem', opacity: 0.5, textAlign: 'right', marginTop: '3px' }}>10:24 AM</p>
+            </div>
           </div>
-        )}
-
-        {success && (
-          <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', color: '#86efac', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', fontSize: '0.9rem', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-            <CheckCircle2 size={18} /> {success}
+          {/* Bubble 2 — sent */}
+          <div style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'flex-end', gap: '0.5rem', marginBottom: '0.75rem', paddingRight: '8px', animation: 'slideInRight 0.5s 0.3s ease both' }}>
+            <div style={{ background: 'var(--sent-bubble)', borderRadius: '8px 8px 2px 8px', padding: '0.6rem 0.9rem', maxWidth: '70%' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-on-sent)' }}>I know, right? The design is incredible ✨</p>
+              <p style={{ fontSize: '0.65rem', opacity: 0.5, textAlign: 'right', marginTop: '3px' }}>10:25 AM ✓✓</p>
+            </div>
           </div>
-        )}
+          {/* Bubble 3 — received */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', animation: 'slideInLeft 0.5s 0.5s ease both' }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'hsl(200, 55%, 25%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.85rem', color: '#fff', flexShrink: 0 }}>A</div>
+            <div style={{ background: 'var(--received-bubble)', borderRadius: '8px 8px 8px 2px', padding: '0.6rem 0.9rem', maxWidth: '70%', border: '1px solid var(--surface-border)' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>Voice notes too? 🎙️ Love it!</p>
+              <p style={{ fontSize: '0.65rem', opacity: 0.5, textAlign: 'right', marginTop: '3px' }}>10:26 AM</p>
+            </div>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          
-          {!isLogin && (
+        {/* Feature pills */}
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '2.5rem' }}>
+          {['🔒 Private', '⚡ Real-time', '🎙️ Voice', '📸 Images', '😊 Reactions'].map(f => (
+            <span key={f} style={{ background: 'rgba(0,168,132,0.1)', border: '1px solid rgba(0,168,132,0.2)', color: 'var(--primary-text)', fontSize: '0.78rem', padding: '0.3rem 0.75rem', borderRadius: '99px', fontWeight: 500 }}>{f}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* ---- RIGHT FORM PANEL ---- */}
+      <div style={{
+        width: '100%', maxWidth: '480px', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '2rem', background: 'var(--bg-secondary)',
+      }}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+
+          {/* Mobile logo (only on mobile) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', justifyContent: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,168,132,0.35)', flexShrink: 0 }}>
+              <img src="/logo.png" alt="Sam Chat" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Sam Chat</span>
+          </div>
+
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
+            {isLogin ? 'Welcome back 👋' : 'Create account'}
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1.75rem', fontSize: '0.9rem' }}>
+            {isLogin ? 'Sign in to continue to Sam Chat' : 'Join Sam Chat and start connecting'}
+          </p>
+
+          {/* Error / Success */}
+          {error && (
+            <div style={{ background: 'var(--error-light)', border: '1px solid rgba(240,79,79,0.2)', color: '#fca5a5', padding: '0.875rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              ⚠️ {error}
+            </div>
+          )}
+          {success && (
+            <div style={{ background: 'var(--success-light)', border: '1px solid rgba(37,211,102,0.2)', color: '#86efac', padding: '0.875rem 1rem', borderRadius: '12px', marginBottom: '1.25rem', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CheckCircle2 size={16} /> {success}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+            {!isLogin && (
+              <div style={{ position: 'relative' }}>
+                <User size={17} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
+                <input
+                  type="text" placeholder="Full Name"
+                  value={name} onChange={e => setName(e.target.value)} required
+                  style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'var(--bg-tertiary)', border: '1.5px solid var(--surface-border-strong)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
+                  onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--surface-border-strong)'}
+                />
+              </div>
+            )}
+
             <div style={{ position: 'relative' }}>
-              <User size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
+              <Mail size={17} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
               <input
-                type="text"
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'var(--bg-primary)', border: '1px solid var(--surface-border)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }}
-                onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--surface-border)'}
+                type="email" placeholder="Email Address"
+                value={email} onChange={e => setEmail(e.target.value)} required
+                style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'var(--bg-tertiary)', border: '1.5px solid var(--surface-border-strong)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
+                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                onBlur={e => e.target.style.borderColor = 'var(--surface-border-strong)'}
               />
             </div>
-          )}
 
-          <div style={{ position: 'relative' }}>
-            <Mail size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'var(--bg-primary)', border: '1px solid var(--surface-border)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--surface-border)'}
-            />
-          </div>
-
-          <div style={{ position: 'relative' }}>
-            <Lock size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '0.875rem 1rem 0.875rem 2.75rem', background: 'var(--bg-primary)', border: '1px solid var(--surface-border)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s' }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
-              onBlur={(e) => e.target.style.borderColor = 'var(--surface-border)'}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '0.75rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'var(--bg-secondary)',
-                border: '1px solid var(--surface-border)',
-                padding: '0.25rem',
-                borderRadius: '8px',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-
-          {isLogin && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.5rem' }}>
-              <button 
-                type="button" 
-                onClick={() => setForgotPasswordStep(1)} 
-                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500 }}
+            <div style={{ position: 'relative' }}>
+              <Lock size={17} color="var(--text-muted)" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', zIndex: 1, pointerEvents: 'none' }} />
+              <input
+                type={showPassword ? 'text' : 'password'} placeholder="Password"
+                value={password} onChange={e => setPassword(e.target.value)} required
+                style={{ width: '100%', padding: '0.875rem 3rem 0.875rem 2.75rem', background: 'var(--bg-tertiary)', border: '1.5px solid var(--surface-border-strong)', borderRadius: '12px', color: 'var(--text-primary)', fontSize: '0.95rem', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
+                onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                onBlur={e => e.target.style.borderColor = 'var(--surface-border-strong)'}
+              />
+              <button
+                type="button" onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.2rem' }}
               >
-                Forgot Password?
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '1rem',
-              background: 'var(--primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              transition: 'var(--transition-fast)',
-              opacity: loading ? 0.7 : 1,
-              marginTop: '0.5rem'
-            }}
-          >
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
-            {!loading && <ArrowRight size={18} />}
-          </button>
-        </form>
+            {isLogin && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.25rem' }}>
+                <button
+                  type="button" onClick={() => setForgotPasswordStep(1)}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 500, fontFamily: 'inherit' }}
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
             <button
-              onClick={() => switchTab(!isLogin)}
+              type="submit" disabled={loading}
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary)',
-                fontWeight: 600,
-                fontSize: '0.95rem',
-                marginLeft: '0.5rem',
-                cursor: 'pointer',
-                fontFamily: 'inherit'
+                width: '100%', padding: '0.95rem',
+                background: loading ? 'var(--primary-hover)' : 'var(--primary)',
+                color: 'white', border: 'none', borderRadius: '12px',
+                fontSize: '0.975rem', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                transition: 'var(--transition-fast)', marginTop: '0.5rem',
+                boxShadow: loading ? 'none' : '0 4px 16px rgba(0,168,132,0.35)',
+                fontFamily: 'inherit',
               }}
             >
-              {isLogin ? 'Sign Up' : 'Sign In'}
+              {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+              {!loading && <ArrowRight size={18} />}
             </button>
-          </p>
+          </form>
+
+          <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}
+              <button
+                onClick={() => switchTab(!isLogin)}
+                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem', marginLeft: '0.4rem', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

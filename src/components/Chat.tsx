@@ -81,6 +81,8 @@ export function Chat({
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [myProfile, setMyProfile] = useState<any>(null);
+  const [lastMessages, setLastMessages] = useState<Record<string, any>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   // Media
   const [uploading, setUploading] = useState(false);
@@ -198,7 +200,12 @@ export function Chat({
         .neq('email', ADMIN_EMAIL)
         .order('is_online', { ascending: false });
 
-      if (data) { setUsers(data); setFilteredUsers(data); }
+      if (data) {
+        setUsers(data);
+        setFilteredUsers(data);
+        // Fetch last messages and unread counts for each user
+        fetchLastMessages(data);
+      }
       setLoadingUsers(false);
     };
     fetchUsers();
@@ -212,6 +219,33 @@ export function Chat({
       }).subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  }, [currentUser.id]);
+
+  // ---- Fetch last messages for chat list ----
+  const fetchLastMessages = useCallback(async (userList: any[]) => {
+    const lastMsgMap: Record<string, any> = {};
+    const unreadMap: Record<string, number> = {};
+    await Promise.all(userList.map(async (u) => {
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${u.id}),and(sender_id.eq.${u.id},receiver_id.eq.${currentUser.id})`)
+        .eq('deleted_for_everyone', false)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (data && data.length > 0) lastMsgMap[u.id] = data[0];
+
+      const { count } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('sender_id', u.id)
+        .eq('receiver_id', currentUser.id)
+        .eq('is_read', false)
+        .eq('deleted_for_everyone', false);
+      unreadMap[u.id] = count || 0;
+    }));
+    setLastMessages(lastMsgMap);
+    setUnreadCounts(unreadMap);
   }, [currentUser.id]);
 
   // ---- Search ----
@@ -514,10 +548,10 @@ export function Chat({
   return (
     <div style={{ display: 'flex', height: '100%', width: '100%', overflow: 'hidden', background: 'var(--bg-primary)' }}>
 
-      {/* =============== SIDEBAR =============== */}
+      {/* =============== CHAT LIST SIDEBAR =============== */}
       <div className={isMobile && mobileShowChat ? 'hide-on-mobile' : ''} style={{
-        width: isMobile ? '100%' : 'var(--sidebar-width)',
-        minWidth: isMobile ? '100%' : 'var(--sidebar-width)',
+        width: isMobile ? '100%' : 'var(--chat-list-width)',
+        minWidth: isMobile ? '100%' : 'var(--chat-list-width)',
         display: 'flex',
         flexDirection: 'column',
         borderRight: isMobile ? 'none' : '1px solid var(--surface-border)',
@@ -527,57 +561,184 @@ export function Chat({
         overflow: 'hidden',
       }}>
         {/* Sidebar Header */}
-        <div style={{ padding: '0.875rem 1rem', borderBottom: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', background: 'var(--bg-secondary)', zIndex: 10 }}>
+        <div style={{
+          padding: '0.875rem 1rem',
+          borderBottom: '1px solid var(--surface-border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'var(--bg-secondary)', flexShrink: 0,
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Avatar user={myProfile} size="sm" />
-            <h2 style={{ fontSize: '1rem', fontWeight: 600 }}>Chats</h2>
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {myProfile?.avatar_url ? (
+                <img src={myProfile.avatar_url} alt="me" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%',
+                  background: `hsl(${((myProfile?.name || 'U').charCodeAt(0) * 15) % 360}, 55%, 30%)`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '1rem', color: '#fff',
+                }}>{(myProfile?.name || myProfile?.email || 'U').charAt(0).toUpperCase()}</div>
+              )}
+              <div style={{
+                position: 'absolute', bottom: 1, right: 1,
+                width: 10, height: 10, background: 'var(--success)',
+                borderRadius: '50%', border: '2px solid var(--bg-secondary)',
+              }} />
+            </div>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Chats</h2>
+          </div>
+          <div style={{ display: 'flex', gap: '0.15rem' }}>
+            <button className="btn btn-icon btn-ghost" title="New Chat" style={{ opacity: 0.6 }} disabled>
+              <Users size={18} />
+            </button>
           </div>
         </div>
 
-        {/* Slide-over panels (Profile) */}
-
         {/* Search */}
-        <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--surface-border)' }}>
+        <div style={{ padding: '0.6rem 0.875rem', borderBottom: '1px solid var(--surface-border)', flexShrink: 0 }}>
           <div style={{ position: 'relative' }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-            <input type="text" placeholder="Search users by name, email..." className="input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ paddingLeft: '2.25rem', fontSize: '0.875rem', borderRadius: '99px' }} />
+            <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            <input
+              type="text"
+              placeholder="Search or start new chat"
+              className="input"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '2.25rem', fontSize: '0.85rem', borderRadius: '99px', background: 'var(--bg-tertiary)', border: '1px solid var(--surface-border)', padding: '0.5rem 0.75rem 0.5rem 2.25rem' }}
+            />
           </div>
         </div>
 
         {/* Users List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           {loadingUsers ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading...</div>
-          ) : filteredUsers.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Users size={36} style={{ marginBottom: '0.75rem', opacity: 0.4 }} />
-              <p style={{ fontWeight: 500, marginBottom: '0.5rem' }}>{searchQuery ? 'No chats found.' : 'No conversations yet.'}</p>
-              {!searchQuery && <p style={{ fontSize: '0.8rem' }}>Go to Discover to start chatting!</p>}
-            </div>
-          ) : (
-            <>
-              <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '0.5rem 0.75rem 0.25rem' }}>
-                {searchQuery ? `Results for "${searchQuery}"` : 'Recent Chats'}
-              </p>
-              {filteredUsers.map(user => (
-                <div key={user.id} onClick={() => { setSelectedUser(user); setMobileShowChat(true); setCurrentView?.('inbox'); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', cursor: 'pointer', transition: 'var(--transition-fast)', background: selectedUser?.id === user.id ? 'var(--bg-active)' : 'transparent', borderBottom: '1px solid var(--surface-border)' }}
-                  onMouseEnter={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-                  onMouseLeave={e => { if (selectedUser?.id !== user.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-                >
-                  <Avatar user={user} size="md" showOnline />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <p style={{ fontWeight: 500, fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</p>
-                    </div>
-                    <p style={{ fontSize: '0.78rem', color: user.is_online ? 'var(--success)' : 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {user.is_online ? '● Online' : `Last seen ${formatLastSeen(user.last_seen)}`}
-                    </p>
-                    {user.username && <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>@{user.username}</p>}
+            /* Skeleton loading */
+            <div style={{ padding: '0.5rem' }}>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                  <div className="skeleton" style={{ width: 44, height: 44, borderRadius: '50%', flexShrink: 0 }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <div className="skeleton" style={{ width: `${50 + i * 10}%`, height: 13, borderRadius: 6 }} />
+                    <div className="skeleton" style={{ width: `${30 + i * 8}%`, height: 11, borderRadius: 6 }} />
                   </div>
                 </div>
               ))}
-            </>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <MessageSquare size={40} style={{ margin: '0 auto 1rem', opacity: 0.25 }} />
+              <p style={{ fontWeight: 600, marginBottom: '0.4rem', color: 'var(--text-secondary)' }}>
+                {searchQuery ? 'No results found' : 'No conversations yet'}
+              </p>
+              <p style={{ fontSize: '0.8rem' }}>
+                {searchQuery ? `No chats matching "${searchQuery}"` : 'Go to Discover to find people 🧭'}
+              </p>
+            </div>
+          ) : (
+            filteredUsers.map(user => {
+              const lastMsg = lastMessages[user.id];
+              const unread = unreadCounts[user.id] || 0;
+              const isActive = selectedUser?.id === user.id;
+              const hue = (user.name || 'U').charCodeAt(0) * 15 % 360;
+
+              // Format last message preview
+              let preview = 'Start a conversation';
+              if (lastMsg) {
+                if (lastMsg.deleted_for_everyone) preview = '🚫 This message was deleted';
+                else if (lastMsg.type === 'image') preview = '🖼️ Image';
+                else if (lastMsg.type === 'audio') preview = '🎙️ Voice message';
+                else preview = lastMsg.content || '';
+              }
+
+              // Relative timestamp
+              let timeLabel = '';
+              if (lastMsg?.created_at) {
+                const d = new Date(lastMsg.created_at);
+                const now = new Date();
+                const diff = now.getTime() - d.getTime();
+                if (diff < 86400000 && d.getDate() === now.getDate()) {
+                  timeLabel = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else if (diff < 172800000) {
+                  timeLabel = 'Yesterday';
+                } else {
+                  timeLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                }
+              }
+
+              return (
+                <div
+                  key={user.id}
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setMobileShowChat(true);
+                    setCurrentView?.('inbox');
+                    // Clear unread on open
+                    setUnreadCounts(prev => ({ ...prev, [user.id]: 0 }));
+                  }}
+                  className={`chat-list-item${isActive ? ' active' : ''}`}
+                >
+                  {/* Avatar with online dot */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.name} style={{ width: 46, height: 46, borderRadius: '50%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{
+                        width: 46, height: 46, borderRadius: '50%',
+                        background: `hsl(${hue}, 55%, 30%)`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 700, fontSize: '1.1rem', color: '#fff', flexShrink: 0,
+                      }}>{(user.name || user.email || 'U').charAt(0).toUpperCase()}</div>
+                    )}
+                    {user.is_online && (
+                      <div style={{
+                        position: 'absolute', bottom: 1, right: 1,
+                        width: 11, height: 11, background: 'var(--success)',
+                        borderRadius: '50%', border: '2.5px solid var(--bg-secondary)',
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Text info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                      <p style={{
+                        fontWeight: unread > 0 ? 700 : 500,
+                        fontSize: '0.92rem',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        color: 'var(--text-primary)',
+                      }}>{user.name}</p>
+                      {timeLabel && (
+                        <span style={{
+                          fontSize: '0.7rem',
+                          color: unread > 0 ? 'var(--success)' : 'var(--text-muted)',
+                          fontWeight: unread > 0 ? 600 : 400,
+                          flexShrink: 0, marginLeft: '0.35rem',
+                        }}>{timeLabel}</span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{
+                        fontSize: '0.8rem',
+                        color: unread > 0 ? 'var(--text-secondary)' : 'var(--text-muted)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        fontWeight: unread > 0 ? 500 : 400,
+                        flex: 1,
+                      }}>
+                        {lastMsg?.sender_id === currentUser.id && !lastMsg?.deleted_for_everyone && (
+                          <span style={{ color: 'var(--text-muted)' }}>You: </span>
+                        )}
+                        {preview}
+                      </p>
+                      {unread > 0 && (
+                        <span className="badge-unread" style={{ marginLeft: '0.4rem', flexShrink: 0 }}>
+                          {unread > 99 ? '99+' : unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -633,42 +794,84 @@ export function Chat({
 
         {selectedUser ? (
           <>
-            {/* Chat Header */}
+            {/* Chat Header — WhatsApp Web style */}
             <div style={{
-              padding: '0.875rem 1.5rem',
+              padding: '0.75rem 1rem',
               borderBottom: '1px solid var(--surface-border)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              background: isMobile ? 'rgba(17, 24, 39, 0.85)' : 'var(--bg-secondary)',
+              display: 'flex', alignItems: 'center', gap: '0.75rem',
+              background: 'var(--bg-secondary)',
               backdropFilter: isMobile ? 'blur(12px)' : 'none',
               WebkitBackdropFilter: isMobile ? 'blur(12px)' : 'none',
-              flexShrink: 0,
-              zIndex: 10,
-              position: 'relative'
+              flexShrink: 0, zIndex: 10, position: 'relative',
             }}>
-              <button onClick={() => { setMobileShowChat(false); setSelectedUser(null); }} className="btn btn-icon btn-ghost" style={{ display: isMobile ? 'flex' : 'none' }}><ChevronLeft size={20} /></button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', flex: 1, cursor: 'pointer' }} onClick={() => setShowProfile(v => !v)}>
-                <Avatar user={selectedUser} size="md" showOnline />
-                <div>
-                  <p style={{ fontWeight: 600 }}>{selectedUser.name}</p>
-                  <p style={{ fontSize: '0.8rem', color: selectedUser.is_online ? 'var(--success)' : 'var(--text-muted)' }}>
-                    {otherTyping ? <span style={{ color: 'var(--success)' }}>typing...</span> : selectedUser.is_online ? '● Online' : `Last seen ${formatLastSeen(selectedUser.last_seen)}`}
+              {/* Back button (mobile) */}
+              <button
+                onClick={() => { setMobileShowChat(false); setSelectedUser(null); }}
+                className="btn btn-icon btn-ghost"
+                style={{ display: isMobile ? 'flex' : 'none', color: 'var(--primary)' }}
+              >
+                <ChevronLeft size={22} />
+              </button>
+
+              {/* Avatar + name + status (clickable → open profile) */}
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, cursor: 'pointer', minWidth: 0 }}
+                onClick={() => setShowProfile(v => !v)}
+              >
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  {selectedUser.avatar_url ? (
+                    <img src={selectedUser.avatar_url} alt={selectedUser.name} style={{ width: 42, height: 42, borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{
+                      width: 42, height: 42, borderRadius: '50%',
+                      background: `hsl(${(selectedUser.name || 'U').charCodeAt(0) * 15 % 360}, 55%, 30%)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 700, fontSize: '1.05rem', color: '#fff',
+                    }}>{(selectedUser.name || 'U').charAt(0).toUpperCase()}</div>
+                  )}
+                  {selectedUser.is_online && (
+                    <div style={{ position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, background: 'var(--success)', borderRadius: '50%', border: '2.5px solid var(--bg-secondary)' }} />
+                  )}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 600, fontSize: '0.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {selectedUser.name}
+                  </p>
+                  <p style={{ fontSize: '0.78rem', color: (selectedUser.is_online || otherTyping) ? 'var(--success)' : 'var(--text-muted)' }}>
+                    {otherTyping ? 'typing...' : selectedUser.is_online ? 'online' : `last seen ${formatLastSeen(selectedUser.last_seen)}`}
                   </p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                <button className="btn btn-icon btn-ghost" title="Info" onClick={() => setShowProfile(v => !v)}><Info size={20} /></button>
+
+              {/* Action buttons — right */}
+              <div style={{ display: 'flex', gap: '0.1rem', flexShrink: 0 }}>
+                <button className="btn btn-icon btn-ghost" title="Video call (coming soon)" disabled style={{ opacity: 0.35 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                </button>
+                <button className="btn btn-icon btn-ghost" title="Voice call (coming soon)" disabled style={{ opacity: 0.35 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.35 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </button>
+                <button className="btn btn-icon btn-ghost" title="Contact info" onClick={() => setShowProfile(v => !v)}>
+                  <Info size={19} />
+                </button>
               </div>
             </div>
 
-            {/* Messages */}
-            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: 'var(--bg-primary)' }}>
+            {/* Messages Area — chat wallpaper */}
+            <div
+              ref={scrollRef}
+              className="chat-wallpaper"
+              style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '2px' }}
+            >
               {messages.length === 0 ? (
-                <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <MessageSquare size={48} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-                  <p>No messages yet</p>
-                  <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>Say hello to {selectedUser.name}! 👋</p>
+                <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-secondary)', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageSquare size={32} color="var(--primary)" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>No messages yet</p>
+                    <p style={{ fontSize: '0.82rem' }}>Send a message to start the conversation 👋</p>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -676,92 +879,182 @@ export function Chat({
                     const isMine = msg.sender_id === currentUser.id;
                     const replyMsg = msg.reply_to ? getReplyMsg(msg.reply_to) : null;
                     const prevMsg = messages[i - 1];
-                    const showAvatar = !isMine && (!prevMsg || prevMsg.sender_id !== msg.sender_id);
+                    const nextMsg = messages[i + 1];
                     const isDeleted = msg.deleted_for_everyone;
 
+                    // Date separator logic
+                    const msgDate = new Date(msg.created_at);
+                    const prevDate = prevMsg ? new Date(prevMsg.created_at) : null;
+                    const showDateSep = !prevDate || msgDate.toDateString() !== prevDate.toDateString();
+
+                    // Avatar: show only for first message in a received group
+                    const showAvatar = !isMine && (!prevMsg || prevMsg.sender_id !== msg.sender_id || showDateSep);
+                    // Tail: show only on last message in a group
+                    const isLastInGroup = isMine
+                      ? (!nextMsg || nextMsg.sender_id !== msg.sender_id)
+                      : (!nextMsg || nextMsg.sender_id !== msg.sender_id);
+
+                    // Format date separator label
+                    const now = new Date();
+                    const diff = now.getTime() - msgDate.getTime();
+                    let dateLabel = '';
+                    if (showDateSep) {
+                      if (msgDate.toDateString() === now.toDateString()) dateLabel = 'Today';
+                      else if (diff < 172800000) dateLabel = 'Yesterday';
+                      else dateLabel = msgDate.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+                    }
+
                     return (
-                      <div key={msg.id} className="animate-fade" style={{ display: 'flex', flexDirection: 'column', alignItems: isMine ? 'flex-end' : 'flex-start', gap: '2px' }}>
-                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', maxWidth: '70%' }}>
+                      <div key={msg.id}>
+                        {/* Date separator */}
+                        {showDateSep && (
+                          <div className="date-separator"><span>{dateLabel}</span></div>
+                        )}
+
+                        {/* Message row */}
+                        <div
+                          className={isMine ? 'animate-msg-right' : 'animate-msg-left'}
+                          style={{
+                            display: 'flex',
+                            flexDirection: isMine ? 'row-reverse' : 'row',
+                            alignItems: 'flex-end',
+                            gap: '6px',
+                            marginBottom: isLastInGroup ? '6px' : '2px',
+                            paddingRight: isMine ? '8px' : '0',
+                            paddingLeft: isMine ? '0' : '0',
+                          }}
+                        >
+                          {/* Received: avatar placeholder for alignment */}
                           {!isMine && (
-                            <div style={{ width: '32px', flexShrink: 0 }}>
-                              {showAvatar && <Avatar user={selectedUser} size="sm" />}
+                            <div style={{ width: 32, flexShrink: 0, alignSelf: 'flex-end', paddingBottom: '2px' }}>
+                              {showAvatar && (
+                                selectedUser.avatar_url ? (
+                                  <img src={selectedUser.avatar_url} alt={selectedUser.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{
+                                    width: 28, height: 28, borderRadius: '50%',
+                                    background: `hsl(${(selectedUser.name||'U').charCodeAt(0)*15%360}, 55%, 30%)`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontWeight: 700, fontSize: '0.7rem', color: '#fff',
+                                  }}>{(selectedUser.name||'U').charAt(0).toUpperCase()}</div>
+                                )
+                              )}
                             </div>
                           )}
+
+                          {/* Bubble */}
                           <div
                             onContextMenu={e => !isDeleted && handleRightClick(e, msg)}
-                            className={isMine ? 'msg-bubble-sent' : 'msg-bubble-received'}
+                            className={isLastInGroup ? (isMine ? 'msg-bubble-sent' : 'msg-bubble-received') : ''}
                             style={{
-                              padding: '0.6rem 0.875rem',
+                              padding: '0.5rem 0.8rem',
                               cursor: 'context-menu',
                               position: 'relative',
-                              maxWidth: '100%',
-                              color: isDeleted ? (isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)') : (isMine ? '#fff' : 'var(--text-primary)'),
+                              maxWidth: isMobile ? '80%' : '65%',
+                              background: isMine ? 'var(--sent-bubble)' : 'var(--received-bubble)',
+                              borderRadius: isLastInGroup
+                                ? (isMine ? '8px 8px 2px 8px' : '8px 8px 8px 2px')
+                                : '8px',
+                              color: isDeleted ? (isMine ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)') : 'inherit',
                               fontStyle: isDeleted ? 'italic' : 'normal',
                               wordBreak: 'break-word',
+                              boxShadow: '0 1px 0.5px rgba(11,20,26,0.15)',
                             }}
                           >
                             {/* Reply quote */}
                             {replyMsg && !isDeleted && (
-                              <div style={{ borderLeft: '3px solid rgba(255,255,255,0.4)', paddingLeft: '0.5rem', marginBottom: '0.4rem', opacity: 0.7, fontSize: '0.8rem' }}>
-                                <p style={{ fontWeight: 600 }}>{replyMsg.sender_id === currentUser.id ? 'You' : selectedUser.name}</p>
-                                <p style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>{replyMsg.content}</p>
+                              <div style={{
+                                borderLeft: `3px solid ${isMine ? 'rgba(255,255,255,0.5)' : 'var(--primary)'}`,
+                                paddingLeft: '0.5rem', marginBottom: '0.4rem',
+                                background: isMine ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.05)',
+                                borderRadius: '4px', padding: '0.25rem 0.5rem',
+                              }}>
+                                <p style={{ fontWeight: 600, fontSize: '0.78rem', color: isMine ? 'rgba(255,255,255,0.8)' : 'var(--primary)' }}>
+                                  {replyMsg.sender_id === currentUser.id ? 'You' : selectedUser.name}
+                                </p>
+                                <p style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px', opacity: 0.75 }}>
+                                  {replyMsg.type === 'image' ? '🖼️ Image' : replyMsg.type === 'audio' ? '🎙️ Voice message' : replyMsg.content}
+                                </p>
                               </div>
                             )}
 
                             {/* Content */}
                             {isDeleted ? (
-                              <p style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', fontSize: '0.875rem' }}>🚫 This message was deleted</p>
+                              <p style={{ fontSize: '0.875rem' }}>🚫 This message was deleted</p>
                             ) : msg.type === 'text' ? (
-                              <p style={{ wordBreak: 'break-word', lineHeight: 1.55, fontSize: '0.9rem' }}>
-                                {msg.content}
-                                {msg.is_edited && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginLeft: '6px', fontStyle: 'italic' }}>(edited)</span>}
-                              </p>
+                              <div>
+                                <p style={{ wordBreak: 'break-word', lineHeight: 1.55, fontSize: '0.9rem' }}>
+                                  {msg.content}
+                                  {msg.is_edited && <span style={{ fontSize: '0.68rem', opacity: 0.6, marginLeft: '5px', fontStyle: 'italic' }}>(edited)</span>}
+                                </p>
+                              </div>
                             ) : msg.type === 'image' && msg.file_url ? (
                               <div>
-                                <img src={msg.file_url} alt="Image" onClick={() => setLightboxImage(msg.file_url)} style={{ maxWidth: '260px', maxHeight: '220px', borderRadius: '8px', cursor: 'zoom-in', display: 'block' }} />
-                                <button onClick={() => handleDownload(msg.file_url, `image-${Date.now()}.jpg`)} className="btn btn-ghost" style={{ marginTop: '0.35rem', padding: '0.25rem 0.5rem', fontSize: '0.78rem', gap: '4px', color: 'rgba(255,255,255,0.7)' }}>
-                                  <Download size={14} /> Download
+                                <img
+                                  src={msg.file_url} alt="Image"
+                                  onClick={() => setLightboxImage(msg.file_url)}
+                                  style={{ maxWidth: '280px', maxHeight: '240px', borderRadius: '6px', cursor: 'zoom-in', display: 'block', marginBottom: '0.25rem' }}
+                                />
+                                <button onClick={() => handleDownload(msg.file_url, `image-${Date.now()}.jpg`)} className="btn btn-ghost" style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', gap: '4px', color: 'rgba(255,255,255,0.7)' }}>
+                                  <Download size={12} /> Download
                                 </button>
                               </div>
                             ) : msg.type === 'audio' && msg.file_url ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                 <AudioPlayer src={msg.file_url} isMine={isMine} />
-                                <button onClick={() => handleDownload(msg.file_url, `audio-${Date.now()}.webm`)} className="btn btn-ghost btn-icon" style={{ padding: '0.25rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }} title="Download">
-                                  <Download size={16} />
+                                <button onClick={() => handleDownload(msg.file_url, `audio-${Date.now()}.webm`)} className="btn btn-ghost btn-icon" style={{ padding: '0.2rem', color: isMine ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)' }} title="Download">
+                                  <Download size={15} />
                                 </button>
                               </div>
                             ) : null}
 
                             {/* Reactions */}
                             {msg.reactions && Object.keys(msg.reactions).length > 0 && !isDeleted && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '5px' }}>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
                                 {Object.entries(msg.reactions).map(([emoji, users]: [string, any]) =>
                                   users.length > 0 && (
-                                    <button key={emoji} onClick={() => addReaction(msg.id, emoji)} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '99px', padding: '1px 7px', cursor: 'pointer', fontSize: '0.8rem', color: 'white' }}>
+                                    <button
+                                      key={emoji}
+                                      onClick={() => addReaction(msg.id, emoji)}
+                                      style={{
+                                        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
+                                        borderRadius: '99px', padding: '1px 6px', cursor: 'pointer',
+                                        fontSize: '0.78rem', color: 'white', animation: 'reactionPop 0.2s ease'
+                                      }}
+                                    >
                                       {emoji} {users.length}
                                     </button>
                                   )
                                 )}
                               </div>
                             )}
-                          </div>
-                        </div>
 
-                        {/* Timestamp + read status */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: isMine ? 0 : '2.5rem', paddingRight: isMine ? 0 : 0 }}>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatTime(msg.created_at)}</span>
-                          {isMine && !isDeleted && (
-                            msg.is_read
-                              ? <CheckCheck size={14} className="tick-read" />
-                              : <Check size={14} className="tick-sent" />
-                          )}
+                            {/* In-bubble timestamp + ticks (WhatsApp style) */}
+                            {!isDeleted && (
+                              <div style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+                                gap: '3px', marginTop: '3px', marginBottom: '-2px',
+                              }}>
+                                <span style={{ fontSize: '0.68rem', opacity: 0.65, lineHeight: 1 }}>
+                                  {formatTime(msg.created_at)}
+                                </span>
+                                {isMine && (
+                                  msg.is_read
+                                    ? <CheckCheck size={14} className="tick-read" />
+                                    : <Check size={14} className="tick-sent" />
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                   {otherTyping && (
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
-                      <Avatar user={selectedUser} size="sm" />
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', marginBottom: '6px' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: `hsl(${(selectedUser.name||'U').charCodeAt(0)*15%360}, 55%, 30%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.7rem', color: '#fff', flexShrink: 0 }}>
+                        {(selectedUser.name||'U').charAt(0).toUpperCase()}
+                      </div>
                       <TypingIndicator />
                     </div>
                   )}
@@ -895,13 +1188,31 @@ export function Chat({
             </div>
           </>
         ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '1rem' }}>
-            <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--surface-border)' }}>
-              <MessageSquare size={40} color="var(--primary)" />
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Welcome to Sam Chat</h2>
-              <p>Search for a user or select one from the sidebar to start chatting</p>
+          /* Empty state — WhatsApp Web branded */
+          <div className="chat-wallpaper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', gap: '1.5rem' }}>
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.25rem',
+              padding: '2.5rem', borderRadius: '24px',
+              background: 'rgba(17,27,33,0.7)', border: '1px solid var(--surface-border)',
+              backdropFilter: 'blur(10px)', maxWidth: '380px', textAlign: 'center',
+            }}>
+              <div style={{
+                width: 88, height: 88, borderRadius: '50%',
+                background: 'linear-gradient(135deg, var(--sent-bubble), #008069)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 8px 30px rgba(0,168,132,0.3)',
+              }}>
+                <img src="/logo.png" alt="Sam Chat" style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: '12px' }} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Sam Chat</h2>
+                <p style={{ fontSize: '0.88rem', lineHeight: 1.6 }}>
+                  Select a conversation from the left to start messaging.
+                </p>
+                <p style={{ fontSize: '0.78rem', marginTop: '0.75rem', opacity: 0.6 }}>
+                  🔒 Your messages are private and secure
+                </p>
+              </div>
             </div>
           </div>
         )}

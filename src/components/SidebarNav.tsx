@@ -1,202 +1,290 @@
 "use client";
 
-import { Compass, MessageSquare, User as UserIcon, LogOut } from "lucide-react";
+import { Compass, MessageSquare, User as UserIcon, LogOut, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type View = 'discover' | 'inbox' | 'profile';
 
-export function SidebarNav({ currentView, setView, currentUser, unreadTotal = 0, onToggle, isOpen = true, isMobile = false }: { currentView: View, setView: (v: View) => void, currentUser: any, unreadTotal?: number, onToggle?: () => void, isOpen?: boolean, isMobile?: boolean }) {
+function Avatar({ user, size = 'sm' }: { user: any; size?: 'sm' | 'md' }) {
+  const initials = (user?.name || user?.email || 'U').charAt(0).toUpperCase();
+  const hue = (user?.name || 'U').charCodeAt(0) * 15 % 360;
+  const sz = size === 'sm' ? 32 : 40;
+  const fs = size === 'sm' ? '0.75rem' : '0.9rem';
+  return user?.avatar_url ? (
+    <img
+      src={user.avatar_url}
+      alt={user.name || 'Me'}
+      style={{ width: sz, height: sz, minWidth: sz, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 0 2px var(--primary)' }}
+    />
+  ) : (
+    <div style={{
+      width: sz, height: sz, minWidth: sz, borderRadius: '50%',
+      background: `hsl(${hue}, 55%, 30%)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: fs, fontWeight: 700, color: '#fff',
+      boxShadow: '0 0 0 2px var(--primary)',
+    }}>
+      {initials}
+    </div>
+  );
+}
+
+export function SidebarNav({
+  currentView,
+  setView,
+  currentUser,
+  unreadTotal = 0,
+  isMobile = false
+}: {
+  currentView: View;
+  setView: (v: View) => void;
+  currentUser: any;
+  unreadTotal?: number;
+  onToggle?: () => void;
+  isOpen?: boolean;
+  isMobile?: boolean;
+}) {
 
   const handleSignOut = async () => {
-    await supabase.from('users').update({ is_online: false, last_seen: new Date().toISOString() }).eq('id', currentUser.id);
+    await supabase.from('users').update({ is_online: false, last_seen: new Date().toISOString() }).eq('id', currentUser?.id);
     await supabase.auth.signOut();
   };
 
-  const NavItem = ({ id, icon, label, badge = 0 }: { id: View, icon: any, label: string, badge?: number }) => {
-    const isActive = currentView === id;
+  // ---- MOBILE: Bottom tab bar ----
+  if (isMobile) {
+    const tabs: { id: View; icon: React.ReactNode; label: string; badge?: number }[] = [
+      { id: 'discover', icon: <Compass size={22} />, label: 'Discover' },
+      { id: 'inbox',    icon: <MessageSquare size={22} />, label: 'Inbox', badge: unreadTotal },
+      { id: 'profile',  icon: <UserIcon size={22} />, label: 'Profile' },
+    ];
+
     return (
-      <button
-        onClick={() => setView(id)}
-        style={{
-          display: 'flex',
-          flexDirection: (isOpen && !isMobile) ? 'row' : 'column',
-          alignItems: 'center',
-          justifyContent: (isOpen && !isMobile) ? 'flex-start' : 'center',
-          gap: (isOpen && !isMobile) ? '1rem' : '0.35rem',
-          padding: isMobile ? '0.4rem 0' : (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
-          width: isMobile ? '100%' : '100%',
-          flex: isMobile ? '0 0 auto' : 'none',
-          border: isMobile ? 'none' : `1px solid ${isActive ? 'rgba(91,142,240,0.2)' : 'transparent'}`,
-          borderRadius: isMobile ? '0' : '14px',
-          color: isActive ? 'var(--primary)' : 'var(--text-muted)',
-          background: isMobile ? 'transparent' : (isActive ? 'var(--primary-light)' : 'transparent'),
-          position: 'relative',
-          transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          overflow: 'hidden',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-        onMouseEnter={e => { if (!isActive && !isMobile) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-        onMouseLeave={e => { if (!isActive && !isMobile) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-        onMouseDown={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.85)'; }}
-        onMouseUp={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
-        onTouchStart={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(0.85)'; }}
-        onTouchEnd={e => { if (isMobile) (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
-      >
-        <div style={{ transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', transform: (isActive && isMobile) ? 'translateY(-2px)' : 'none', flexShrink: 0, ...(isActive && { filter: 'drop-shadow(0 0 8px rgba(91,142,240,0.5))' }) }}>
-          {icon}
+      <div style={{
+        width: '100%', height: '100%',
+        background: 'transparent',
+        display: 'flex', flexDirection: 'row',
+        alignItems: 'center', justifyContent: 'space-around',
+        padding: '0 0.5rem',
+      }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+          <div style={{ width: 32, height: 32, borderRadius: '10px', overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,168,132,0.4)' }}>
+            <img src="/logo.png" alt="Sam Chat" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            Sam Chat
+          </span>
         </div>
-        {(!isMobile) && (
-          <span style={{
-            fontSize: isOpen ? '0.9rem' : '0.68rem',
-            fontWeight: isActive ? 700 : 500,
-            letterSpacing: isOpen ? 'normal' : '0.02em',
-            textTransform: isOpen ? 'none' : 'uppercase',
-            whiteSpace: 'nowrap',
-            opacity: 1,
-            transition: 'opacity 0.2s ease',
-          }}>
-            {label}
-          </span>
-        )}
-        {badge > 0 && (
-          <span className="badge" style={{
-            position: 'absolute',
-            top: (isOpen && !isMobile) ? '50%' : '4px',
-            right: (isOpen && !isMobile) ? '1rem' : '50%',
-            transform: (isOpen && !isMobile) ? 'translateY(-50%)' : 'translateX(14px)',
-            border: isMobile ? 'none' : '2px solid var(--bg-secondary)',
-            background: 'var(--error)',
-            color: 'white',
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            padding: '2px 6px',
-            borderRadius: '999px',
-            minWidth: '18px',
-            textAlign: 'center',
-          }}>
-            {badge > 99 ? '99+' : badge}
-          </span>
-        )}
-      </button>
+
+        {/* Tab buttons */}
+        <div style={{ display: 'flex', gap: '0.25rem' }}>
+          {tabs.map(tab => {
+            const isActive = currentView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setView(tab.id)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: '2px', padding: '0.4rem 0.6rem',
+                  border: 'none', background: 'transparent', cursor: 'pointer',
+                  color: isActive ? 'var(--primary)' : 'var(--text-muted)',
+                  borderRadius: 'var(--radius-md)',
+                  position: 'relative', WebkitTapHighlightColor: 'transparent',
+                  transition: 'color 0.15s ease',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <div style={{ filter: isActive ? 'drop-shadow(0 0 6px rgba(0,168,132,0.5))' : 'none', transition: 'filter 0.2s' }}>
+                  {tab.icon}
+                </div>
+                <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  {tab.label}
+                </span>
+                {(tab.badge ?? 0) > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '2px', right: '2px',
+                    background: 'var(--error)', color: 'white',
+                    fontSize: '0.58rem', fontWeight: 700,
+                    borderRadius: '99px', minWidth: '16px', height: '16px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 3px',
+                  }}>
+                    {(tab.badge ?? 0) > 99 ? '99+' : tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
     );
-  };
+  }
+
+  // ---- DESKTOP: Narrow icon strip (WhatsApp Web style) ----
+  const navItems: { id: View; icon: (active: boolean) => React.ReactNode; label: string; badge?: number }[] = [
+    {
+      id: 'discover',
+      icon: (a) => <Compass size={24} strokeWidth={a ? 2.5 : 1.75} />,
+      label: 'Discover'
+    },
+    {
+      id: 'inbox',
+      icon: (a) => <MessageSquare size={24} strokeWidth={a ? 2.5 : 1.75} />,
+      label: 'Inbox',
+      badge: unreadTotal,
+    },
+    {
+      id: 'profile',
+      icon: (a) => <UserIcon size={24} strokeWidth={a ? 2.5 : 1.75} />,
+      label: 'My Profile'
+    },
+  ];
 
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
-      background: isMobile ? 'transparent' : 'var(--bg-secondary)',
-      borderRight: isMobile ? 'none' : '1px solid var(--surface-border)',
-      display: 'flex',
-      flexDirection: isMobile ? 'row' : 'column',
+      width: '100%', height: '100%',
+      background: 'var(--bg-secondary)',
+      borderRight: '1px solid var(--surface-border)',
+      display: 'flex', flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: isMobile ? 'space-between' : 'flex-start',
-      padding: isMobile ? '0' : (isOpen ? '1.25rem 1rem' : '1.25rem 0.5rem'),
-      gap: isMobile ? '1rem' : '0.5rem',
+      padding: '1rem 0',
+      gap: '0.25rem',
       zIndex: 20,
-      transition: 'padding 0.3s ease',
     }}>
 
-      {/* Logo Area — click entire area to toggle sidebar on desktop, navigate home on mobile */}
-      <button
-        onClick={isMobile ? undefined : onToggle}
-        title={isMobile ? 'Sam Chat' : (isOpen ? 'Collapse sidebar' : 'Expand sidebar')}
-        style={{
-          width: isMobile ? 'auto' : '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: isOpen || isMobile ? 'flex-start' : 'center',
-          gap: isMobile ? '0.5rem' : '0.75rem',
-          marginBottom: isMobile ? '0' : '1.25rem',
-          background: 'transparent',
-          border: 'none',
-          outline: 'none',
-          cursor: isMobile ? 'default' : (onToggle ? 'pointer' : 'default'),
-          padding: isMobile ? '0' : (isOpen ? '0.5rem' : '0.25rem'),
-          borderRadius: '16px',
-          transition: 'all 0.2s',
-          overflow: 'hidden',
-          flexShrink: 0,
-        }}
-      >
+      {/* Logo */}
+      <div style={{ marginBottom: '1rem', padding: '0 0.5rem' }}>
         <div style={{
-          width: isMobile ? '36px' : '44px',
-          height: isMobile ? '36px' : '44px',
-          minWidth: isMobile ? '36px' : '44px',
-          borderRadius: isMobile ? '10px' : '14px',
+          width: 42, height: 42, borderRadius: '14px',
           overflow: 'hidden',
-          boxShadow: '0 4px 16px rgba(91,142,240,0.35)',
-          flexShrink: 0,
+          boxShadow: '0 4px 16px rgba(0,168,132,0.35)',
         }}>
           <img src="/logo.png" alt="Sam Chat" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
-        
-        {(isOpen || isMobile) && (
-          <span style={{
-            fontSize: isMobile ? '1.1rem' : '1.2rem',
-            fontWeight: 800,
-            color: 'var(--text-primary)',
-            whiteSpace: 'nowrap',
-            letterSpacing: '-0.02em',
-          }}>
-            Sam Chat
-          </span>
-        )}
-      </button>
-
-      {/* Nav Items */}
-      <div style={{ flex: isMobile ? 'none' : 1, display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '0.5rem' : '0.3rem', width: isMobile ? 'auto' : '100%', justifyContent: isMobile ? 'flex-end' : 'flex-start' }}>
-        <NavItem id="discover" icon={<Compass size={isMobile ? 24 : 26} strokeWidth={currentView==='discover' ? 2.5 : 2} />} label="Discover" />
-        <NavItem id="inbox"    icon={<MessageSquare size={isMobile ? 24 : 26} strokeWidth={currentView==='inbox' ? 2.5 : 2} />} label="Inbox" badge={unreadTotal} />
-        <NavItem id="profile"  icon={<UserIcon size={isMobile ? 24 : 26} strokeWidth={currentView==='profile' ? 2.5 : 2} />} label="Profile" />
       </div>
 
-      {/* Separator */}
-      {!isMobile && <div style={{ width: isOpen ? '100%' : '40px', height: '1px', background: 'var(--surface-border)', margin: '0.5rem 0', transition: 'width 0.3s ease' }} />}
+      {/* Nav Items */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.15rem', width: '100%', padding: '0 0.5rem' }}>
+        {navItems.map(item => {
+          const isActive = currentView === item.id;
+          return (
+            <div key={item.id} className="tooltip-wrapper" style={{ position: 'relative', width: '100%' }}>
+              <button
+                onClick={() => setView(item.id)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  gap: '3px', padding: '0.65rem 0.5rem',
+                  width: '100%',
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  background: isActive ? 'var(--primary-light)' : 'transparent',
+                  color: isActive ? 'var(--primary)' : 'var(--text-muted)',
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'background 0.15s ease, color 0.15s ease',
+                  position: 'relative',
+                }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                {/* Active left bar */}
+                {isActive && (
+                  <div style={{
+                    position: 'absolute', left: 0, top: '20%', bottom: '20%',
+                    width: '3px', background: 'var(--primary)',
+                    borderRadius: '0 3px 3px 0',
+                  }} />
+                )}
+                <div style={{
+                  filter: isActive ? 'drop-shadow(0 0 8px rgba(0,168,132,0.5))' : 'none',
+                  transition: 'filter 0.2s',
+                }}>
+                  {item.icon(isActive)}
+                </div>
+                <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                  {item.label}
+                </span>
+                {(item.badge ?? 0) > 0 && (
+                  <span style={{
+                    position: 'absolute', top: '6px', right: '6px',
+                    background: 'var(--error)', color: 'white',
+                    fontSize: '0.6rem', fontWeight: 700,
+                    borderRadius: '99px', minWidth: '17px', height: '17px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 3px',
+                    border: '2px solid var(--bg-secondary)',
+                  }}>
+                    {(item.badge ?? 0) > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </button>
+              <div className="tooltip">{item.label}</div>
+            </div>
+          );
+        })}
+      </div>
 
-      {/* Sign Out */}
-      {!isMobile && (
-        <button
-          onClick={handleSignOut}
-          title="Sign Out"
-          style={{
-            display: 'flex',
-            flexDirection: (isOpen && !isMobile) ? 'row' : 'column',
-            alignItems: 'center',
-            justifyContent: (isOpen && !isMobile) ? 'flex-start' : 'center',
-            gap: (isOpen && !isMobile) ? '1rem' : '0.35rem',
-            padding: (isOpen ? '0.85rem 1rem' : '0.7rem 0.5rem'),
-            width: '100%',
-            flex: 'none',
-            border: '1px solid transparent',
-            borderRadius: '14px',
-            color: 'var(--text-muted)',
-            background: 'transparent',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s',
-            overflow: 'hidden',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--error)'; (e.currentTarget as HTMLElement).style.background = 'var(--error-light)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-        >
-          <LogOut size={26} strokeWidth={2} style={{ flexShrink: 0 }} />
-          {isOpen && (
-            <span style={{ 
-              fontSize: '0.9rem', 
-              fontWeight: 600, 
-              letterSpacing: 'normal', 
-              textTransform: 'none',
-              whiteSpace: 'nowrap',
-            }}>
+      {/* Bottom section */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem', width: '100%', padding: '0 0.5rem' }}>
+
+        {/* Separator */}
+        <div style={{ width: '36px', height: '1px', background: 'var(--surface-border)', margin: '0.5rem auto' }} />
+
+        {/* Settings placeholder */}
+        <div className="tooltip-wrapper" style={{ position: 'relative', width: '100%' }}>
+          <button
+            title="Settings"
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: '3px', padding: '0.65rem 0.5rem', width: '100%',
+              border: 'none', cursor: 'default', fontFamily: 'inherit',
+              background: 'transparent', color: 'var(--text-muted)',
+              borderRadius: 'var(--radius-md)', opacity: 0.5,
+            }}
+          >
+            <Settings size={22} strokeWidth={1.75} />
+            <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              Settings
+            </span>
+          </button>
+          <div className="tooltip">Settings (Coming soon)</div>
+        </div>
+
+        {/* Logout */}
+        <div className="tooltip-wrapper" style={{ position: 'relative', width: '100%' }}>
+          <button
+            onClick={handleSignOut}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: '3px', padding: '0.65rem 0.5rem', width: '100%',
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              background: 'transparent', color: 'var(--text-muted)',
+              borderRadius: 'var(--radius-md)', transition: 'background 0.15s, color 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--error-light)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--error)';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = 'transparent';
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
+            }}
+          >
+            <LogOut size={22} strokeWidth={1.75} />
+            <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
               Logout
             </span>
-          )}
-        </button>
-      )}
+          </button>
+          <div className="tooltip">Sign Out</div>
+        </div>
+
+        {/* User Avatar (bottom) */}
+        <div className="tooltip-wrapper" style={{ marginTop: '0.5rem', cursor: 'pointer', position: 'relative' }}
+          onClick={() => setView('profile')}>
+          <Avatar user={currentUser} size="sm" />
+          <div className="tooltip">My Profile</div>
+        </div>
+
+      </div>
     </div>
   );
 }
